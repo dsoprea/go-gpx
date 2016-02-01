@@ -12,7 +12,6 @@ all: bin/${GPXPARSE_EXECUTABLE_FILENAME}
 
 clean:
 	rm -fr bin pkg 
-#	rm -fr src/gopkg.in src/code.google.com src/github.com
 
 bin/${GPXPARSE_EXECUTABLE_FILENAME}: ${GPXPARSE_SOURCEFILES}
 	echo ${GPXPARSE_SOURCEFILES}

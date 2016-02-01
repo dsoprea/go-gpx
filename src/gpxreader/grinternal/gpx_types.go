@@ -5,6 +5,23 @@ import (
     "time"
 )
 
+/*
+
+- Add structures for the following nodes:
+
+    rte
+    link
+    copyright
+    email
+    author
+    metadata
+    bounds
+
+- What does the MovingData struct from the original project represent?
+- Additional reference: http://www.topografix.com/gpx_manual.asp#hdop
+
+*/
+
 type Gpx struct {
     Xmlns string
     Xsi string
