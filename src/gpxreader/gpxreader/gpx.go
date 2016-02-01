@@ -1,6 +1,6 @@
 // GPX parser/visitor logic
 
-package grinternal
+package gpxreader
 
 import (
     "os"
@@ -125,32 +125,46 @@ func (gp *GpxParser) handleStart(tagName *string, attrp *map[string]string) (err
 
     switch *tagName {
     case "gpx":
-        err := gp.handleGpxEnd(attrp)
+        err := gp.handleGpxStart(attrp)
         if err != nil {
             panic(err)
         }
 
-        gp.v.GpxOpen(gp.currentGpx)
+        err = gp.v.GpxOpen(gp.currentGpx)
+        if err != nil {
+            panic(err)
+        }
     case "trk":
         gp.currentTrack = &Track {}
-        gp.v.TrackOpen(gp.currentTrack)
+
+        err = gp.v.TrackOpen(gp.currentTrack)
+        if err != nil {
+            panic(err)
+        }
     case "trkseg":
         gp.currentTrackSegment = &TrackSegment {}
-        gp.v.TrackSegmentOpen(gp.currentTrackSegment)
+
+        err = gp.v.TrackSegmentOpen(gp.currentTrackSegment)
+        if err != nil {
+            panic(err)
+        }
     case "trkpt":
         err := gp.handleTrackPointEnd(attrp)
         if err != nil {
             panic(err)
         }
 
-        gp.v.TrackPointOpen(gp.currentTrackPoint)
+        err = gp.v.TrackPointOpen(gp.currentTrackPoint)
+        if err != nil {
+            panic(err)
+        }
     }
 
     return nil
 }
 
 // Handle the end of a "GPX" [root] node.
-func (gp *GpxParser) handleGpxEnd(attrp *map[string]string) (err error) {
+func (gp *GpxParser) handleGpxStart(attrp *map[string]string) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
@@ -201,16 +215,32 @@ func (gp *GpxParser) handleTrackPointEnd(attrp *map[string]string) (err error) {
 func (gp *GpxParser) handleEnd(tagName *string) (err error) {
     switch *tagName {
     case "gpx":
-        gp.v.GpxClose(gp.currentGpx)
+        err := gp.v.GpxClose(gp.currentGpx)
+        if err != nil {
+            panic(err)
+        }
+
         gp.currentGpx = nil
     case "trk":
-        gp.v.TrackClose(gp.currentTrack)
+        err := gp.v.TrackClose(gp.currentTrack)
+        if err != nil {
+            panic(err)
+        }
+
         gp.currentTrack = nil
     case "trkseg":
-        gp.v.TrackSegmentClose(gp.currentTrackSegment)
+        err := gp.v.TrackSegmentClose(gp.currentTrackSegment)
+        if err != nil {
+            panic(err)
+        }
+
         gp.currentTrackSegment = nil
     case "trkpt":
-        gp.v.TrackPointClose(gp.currentTrackPoint)
+        err := gp.v.TrackPointClose(gp.currentTrackPoint)
+        if err != nil {
+            panic(err)
+        }
+
         gp.currentTrackPoint = nil
     }
 

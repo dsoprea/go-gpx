@@ -1,4 +1,4 @@
-package grinternal
+package gpxreader
 
 import (
 )

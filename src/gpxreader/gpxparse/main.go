@@ -4,55 +4,82 @@ import (
     "os"
     "fmt"
 
-    "gpxreader/grinternal"
+    "gpxreader/gpxreader"
+
+    flags "github.com/jessevdk/go-flags"
 )
 
-type GpxVisitor struct {}
+type gpxVisitor struct {}
 
-func NewGpxVisitor() (*GpxVisitor) {
-    return &GpxVisitor {}
+func newgpxVisitor() (*gpxVisitor) {
+    return &gpxVisitor {}
 }
 
-func (gv *GpxVisitor) GpxOpen(gpx *grinternal.Gpx) error {
-    fmt.Printf("GPX: %s\n", *gpx)
+func (gv *gpxVisitor) GpxOpen(gpx *gpxreader.Gpx) error {
+    fmt.Printf("GPX: %s\n", gpx)
 
     return nil
 }
 
-func (gv *GpxVisitor) GpxClose(gpx *grinternal.Gpx) error {
+func (gv *gpxVisitor) GpxClose(gpx *gpxreader.Gpx) error {
     return nil
 }
 
-func (gv *GpxVisitor) TrackOpen(track *grinternal.Track) error {
+func (gv *gpxVisitor) TrackOpen(track *gpxreader.Track) error {
+    fmt.Printf("Track: %s\n", track)
+
     return nil
 }
 
-func (gv *GpxVisitor) TrackClose(track *grinternal.Track) error {
+func (gv *gpxVisitor) TrackClose(track *gpxreader.Track) error {
     return nil
 }
 
-func (gv *GpxVisitor) TrackSegmentOpen(trackSegment *grinternal.TrackSegment) error {
+func (gv *gpxVisitor) TrackSegmentOpen(trackSegment *gpxreader.TrackSegment) error {
+    fmt.Printf("Track segment: %s\n", trackSegment)
+
     return nil
 }
 
-func (gv *GpxVisitor) TrackSegmentClose(trackSegment *grinternal.TrackSegment) error {
+func (gv *gpxVisitor) TrackSegmentClose(trackSegment *gpxreader.TrackSegment) error {
     return nil
 }
 
-func (gv *GpxVisitor) TrackPointOpen(trackPoint *grinternal.TrackPoint) error {
+func (gv *gpxVisitor) TrackPointOpen(trackPoint *gpxreader.TrackPoint) error {
     return nil
 }
 
-func (gv *GpxVisitor) TrackPointClose(trackPoint *grinternal.TrackPoint) error {
+func (gv *gpxVisitor) TrackPointClose(trackPoint *gpxreader.TrackPoint) error {
     fmt.Printf("Point: %s\n", trackPoint)
 
     return nil
 }
 
+type options struct {
+    GpxFilepath string  `short:"f" long:"gpx-filepath" description:"GPX file-path" required:"true"`
+}
+
+func readOptions () *options {
+    o := options {}
+
+    _, err := flags.Parse(&o)
+    if err != nil {
+        os.Exit(1)
+    }
+
+    return &o
+}
+
 func main() {
-    filepath := "test/20130729.gpx"
-    gv := NewGpxVisitor()
-    gp := grinternal.NewGpxParser(&filepath, gv)
+    var gpxFilepath string
+
+    o := readOptions()
+
+    gpxFilepath = o.GpxFilepath
+
+
+    gv := newgpxVisitor()
+    gp := gpxreader.NewGpxParser(&gpxFilepath, gv)
 
     defer gp.Close()
 
