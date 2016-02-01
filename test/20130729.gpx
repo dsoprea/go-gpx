@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0" creator="GPSLogger - http://gpslogger.mendhak.com/" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd">
+   <time>2013-07-30T02:38:29Z</time>
+   <bounds />
+   <trk>
+      <trkseg>
+         <trkpt lat="26.07072655" lon="-80.14360848">
+            <ele>-18.5</ele>
+            <course>0.0</course>
+            <speed>0.75</speed>
+            <hdop>5.8</hdop>
+            <src>gps</src>
+            <sat>7</sat>
+            <time>2013-07-30T02:38:29Z</time>
+         </trkpt>
+         <trkpt lat="26.07099936" lon="-80.14324075">
+            <ele>-43.900001525878906</ele>
+            <hdop>47.6</hdop>
+            <src>gps</src>
+            <sat>4</sat>
+            <time>2013-07-30T02:39:15Z</time>
+         </trkpt>
+         <trkpt lat="26.07173904" lon="-80.14322448">
+            <ele>-8.100000381469727</ele>
+            <hdop>23.6</hdop>
+            <src>gps</src>
+            <sat>5</sat>
+            <time>2013-07-30T02:40:17Z</time>
+         </trkpt>
+         <trkpt lat="26.07182345" lon="-80.14294142">
+            <ele>-24.600000381469727</ele>
+            <hdop>21.6</hdop>
+            <src>gps</src>
+            <sat>5</sat>
+            <time>2013-07-30T02:41:19Z</time>
+         </trkpt>
+      </trkseg>
+   </trk>
+</gpx>
