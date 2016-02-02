@@ -9,7 +9,7 @@ This project uses the basic XML tokenization that the XML package provides while
 
 The `gpxparse` tool and a modest GPS log is provided for a reference implementation of the `gpxreader` package (which is also the name of this library's package). This is the mostly the source of that tool:
 
-```
+```go
 package main
 
 import (
