@@ -1,6 +1,6 @@
 ## Description
 
-The native Go XML package wants to load the whole XML document into memory. It does allow you to browse the nodes, but the moment that you tell it to decode it, it will discard all subnodes. This means that wanting to look at the base GPX file's info comes at a cost of discard all of the recorded points underneath it.
+The native Go XML package wants to load the whole XML document into memory. It does allow you to browse the nodes, but the moment that you tell it to decode it, it will discard all subnodes. This means that wanting to look at the base GPX info in the root node comes at a cost of discarding all of the recorded points several levels below it.
 
 This project uses the basic XML tokenization that the XML package provides while parsing the data and assigning the attributes and character-data to data-structures itself. It is very efficient in that no data is processed before you're ready for it and no substantial amount of data is kept in memory. You simply provide a class that fulfills an callback interface and it's triggered at the various nodes with the information about that node/entity.
 
