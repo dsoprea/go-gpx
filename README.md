@@ -97,4 +97,4 @@ Point: TrackPoint<LAT=(26.07182345) LON=(-80.14294142) ELV=(-24.600000) CRS=(0.0
 
 ## To Do
 
-- Only the primary location information and other data that is highly common and related is read and supported by the provided data structures. We need to add any fields or parse any nodes that are currently missing per the spec (see the TODO file). Feel free to request this and/or submit a PR.
+- Only the primary location information and other data that is highly common and related is read and supported by the provided data structures. We need to add any attributes or parse any nodes that are currently missing per the spec (see the TODO file). Feel free to request this and/or submit a PR.
