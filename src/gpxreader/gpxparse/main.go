@@ -77,7 +77,6 @@ func main() {
 
     gpxFilepath = o.GpxFilepath
 
-
     gv := newgpxVisitor()
     gp := gpxreader.NewGpxParser(&gpxFilepath, gv)
 
