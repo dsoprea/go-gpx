@@ -4,10 +4,12 @@ The native Go XML package wants to load the whole XML document into memory. It d
 
 This project uses the basic XML tokenization that the XML package provides while parsing the data and assigning the attributes and character-data to data-structures itself. It is very efficient in that no data is processed before you're ready for it and no substantial amount of data is kept in memory. You simply provide a class that fulfills an callback interface and it's triggered at the various nodes with the information about that node/entity.
 
+
 ## Example
 
 The `gpxparse` tool and a modest GPS log is provided for a reference implementation of the `gpxreader` package (which is also the name of this library's package). This is the mostly the source of that tool:
 
+```
 package main
 
 import (
