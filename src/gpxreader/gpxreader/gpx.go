@@ -3,11 +3,46 @@
 package gpxreader
 
 import (
-    "os"
-    "strings"
 
-    "encoding/xml"
+// TODO(dustin): Implement the URL.
+    "xmlvisitor/xmlvisitor"
+
 )
+
+type GpxParser struct {
+    xp *xmlvisitor.XmlParser
+}
+
+// Create parser.
+func NewGpxParser(filepath *string, visitor GpxVisitor) *GpxParser {
+    gp := &GpxParser {}
+
+    v := newXmlVisitor(gp, visitor)
+    gp.xp = xmlvisitor.NewXmlParser(filepath, v)
+
+    return gp
+}
+
+// Close resources.
+func (gp *GpxParser) Close() {
+    gp.xp.Close()
+}
+
+// Run the parse with a minimal memory footprint.
+func (gp *GpxParser) Parse() (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = r.(error)
+        }
+    }()
+
+    err = gp.xp.Parse()
+    if err != nil {
+        panic(err)
+    }
+
+    return nil
+}
 
 type GpxVisitor interface {
     GpxOpen(gpx *Gpx) error
@@ -20,10 +55,8 @@ type GpxVisitor interface {
     TrackPointClose(trackPoint *TrackPoint) error
 }
 
-type GpxParser struct {
-    f *os.File
-    decoder *xml.Decoder
-    ns *Stack
+type xmlVisitor struct {
+    gp *GpxParser
     v GpxVisitor
 
     currentGpx *Gpx
@@ -32,91 +65,14 @@ type GpxParser struct {
     currentTrackPoint *TrackPoint
 }
 
-// Create parser.
-func NewGpxParser(filepath *string, visitor GpxVisitor) *GpxParser {
-    f, err := os.Open(*filepath)
-    if err != nil {
-        panic(err)
-    }
-
-    decoder := xml.NewDecoder(f)
-    ns := NewStack()
-
-    return &GpxParser {
-            f: f,
-            decoder: decoder,
-            ns: ns,
-            v: visitor,
+func newXmlVisitor(gp *GpxParser, v GpxVisitor) (*xmlVisitor) {
+    return &xmlVisitor {
+            gp: gp,
+            v: v,
     }
 }
 
-// Close resources.
-func (gp *GpxParser) Close() {
-    gp.f.Close()
-}
-
-// Run the parse with a minimal memory footprint.
-func (gp *GpxParser) Parse() (err error) {
-    defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
-        }
-    }()
-
-    for {
-        token, err := gp.decoder.Token()
-        if err != nil {
-            break
-        }
-  
-        switch t := token.(type) {
-        case xml.StartElement:
-            elmt := xml.StartElement(t)
-            name := elmt.Name.Local
-
-            gp.ns.Push(name)
-
-            var attributes map[string]string = make(map[string]string)
-            for _, a := range t.Attr {
-                attributes[a.Name.Local] = a.Value
-            }
-
-            err := gp.handleStart(&name, &attributes)
-            if err != nil {
-                panic(err)
-            }
-
-        case xml.EndElement:
-            gp.ns.Pop()
-
-            elmt := xml.EndElement(t)
-            name := elmt.Name.Local
-
-            err := gp.handleEnd(&name)
-            if err != nil {
-                panic(err)
-            }
-
-        case xml.CharData:
-            bytes := xml.CharData(t)
-            s := strings.TrimSpace(string([]byte(bytes)))
-
-            err := gp.handleCharData(&s)
-            if err != nil {
-                panic(err)
-            }
-
-        case xml.Comment:
-        case xml.ProcInst:
-        case xml.Directive:
-        }
-    }
-
-    return nil
-}
-
-// Handle start tags.
-func (gp *GpxParser) handleStart(tagName *string, attrp *map[string]string) (err error) {
+func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
@@ -125,36 +81,36 @@ func (gp *GpxParser) handleStart(tagName *string, attrp *map[string]string) (err
 
     switch *tagName {
     case "gpx":
-        err := gp.handleGpxStart(attrp)
+        err := xv.handleGpxStart(attrp)
         if err != nil {
             panic(err)
         }
 
-        err = gp.v.GpxOpen(gp.currentGpx)
+        err = xv.v.GpxOpen(xv.currentGpx)
         if err != nil {
             panic(err)
         }
     case "trk":
-        gp.currentTrack = &Track {}
+        xv.currentTrack = &Track {}
 
-        err = gp.v.TrackOpen(gp.currentTrack)
+        err := xv.v.TrackOpen(xv.currentTrack)
         if err != nil {
             panic(err)
         }
     case "trkseg":
-        gp.currentTrackSegment = &TrackSegment {}
+        xv.currentTrackSegment = &TrackSegment {}
 
-        err = gp.v.TrackSegmentOpen(gp.currentTrackSegment)
+        err := xv.v.TrackSegmentOpen(xv.currentTrackSegment)
         if err != nil {
             panic(err)
         }
     case "trkpt":
-        err := gp.handleTrackPointEnd(attrp)
+        err := xv.handleTrackPointEnd(attrp)
         if err != nil {
             panic(err)
         }
 
-        err = gp.v.TrackPointOpen(gp.currentTrackPoint)
+        err = xv.v.TrackPointOpen(xv.currentTrackPoint)
         if err != nil {
             panic(err)
         }
@@ -163,8 +119,81 @@ func (gp *GpxParser) handleStart(tagName *string, attrp *map[string]string) (err
     return nil
 }
 
+func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error {
+    switch *tagName {
+    case "gpx":
+        
+        err := xv.v.GpxClose(xv.currentGpx)
+        if err != nil {
+            panic(err)
+        }
+
+        xv.currentGpx = nil
+
+    case "trk":
+        
+        err := xv.v.TrackClose(xv.currentTrack)
+        if err != nil {
+            panic(err)
+        }
+
+        xv.currentTrack = nil
+
+    case "trkseg":
+        
+        err := xv.v.TrackSegmentClose(xv.currentTrackSegment)
+        if err != nil {
+            panic(err)
+        }
+
+        xv.currentTrackSegment = nil
+
+    case "trkpt":
+        
+        err := xv.v.TrackPointClose(xv.currentTrackPoint)
+        if err != nil {
+            panic(err)
+        }
+
+        xv.currentTrackPoint = nil
+    }
+
+    return nil
+}
+
+func (xv *xmlVisitor) HandleCharData(data *string, xp *xmlvisitor.XmlParser) (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = r.(error)
+        }
+    }()
+
+//    if xp.LastState() != xmlvisitor.XmlPartStartTag {
+//        return nil
+//    }
+
+    ns := xp.NodeStack()
+    current := ns.PeekFromEnd(0)
+    parent := ns.PeekFromEnd(1)
+
+    if *data != "" && current != nil && parent != nil {
+        currentName := current.(string)
+        parentName := parent.(string)
+
+        if parentName == "trkpt" {
+            err := xv.handleTrackPointCharData(&currentName, data)
+            if err != nil {
+                panic(err)
+            }
+        }
+    }
+
+    return nil
+}
+
+
 // Handle the end of a "GPX" [root] node.
-func (gp *GpxParser) handleGpxStart(attrp *map[string]string) (err error) {
+func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
@@ -173,7 +202,7 @@ func (gp *GpxParser) handleGpxStart(attrp *map[string]string) (err error) {
 
     attr := *attrp
 
-    gp.currentGpx = &Gpx {
+    xv.currentGpx = &Gpx {
             Xmlns: attr["xmlns"],
             Xsi: attr["xsi"],
             Creator: attr["creator"],
@@ -182,19 +211,19 @@ func (gp *GpxParser) handleGpxStart(attrp *map[string]string) (err error) {
 
     versionRaw, ok := attr["version"]
     if ok == true {
-        gp.currentGpx.Version = parseFloat32(versionRaw)
+        xv.currentGpx.Version = parseFloat32(versionRaw)
     }
 
     timeRaw, ok := attr["time"]
     if ok == true {
-        gp.currentGpx.Time = parseIso8601Time(timeRaw)
+        xv.currentGpx.Time = parseIso8601Time(timeRaw)
     }
 
     return nil
 }
 
 // Handle the end of a track-point node.
-func (gp *GpxParser) handleTrackPointEnd(attrp *map[string]string) (err error) {
+func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
@@ -203,78 +232,16 @@ func (gp *GpxParser) handleTrackPointEnd(attrp *map[string]string) (err error) {
 
     attr := *attrp
 
-    gp.currentTrackPoint = &TrackPoint {}
+    xv.currentTrackPoint = &TrackPoint {}
 
-    gp.currentTrackPoint.LatitudeDecimal = parseFloat64(attr["lat"])
-    gp.currentTrackPoint.LongitudeDecimal = parseFloat64(attr["lon"])
-
-    return nil
-}
-
-// Handle end tags.
-func (gp *GpxParser) handleEnd(tagName *string) (err error) {
-    switch *tagName {
-    case "gpx":
-        err := gp.v.GpxClose(gp.currentGpx)
-        if err != nil {
-            panic(err)
-        }
-
-        gp.currentGpx = nil
-    case "trk":
-        err := gp.v.TrackClose(gp.currentTrack)
-        if err != nil {
-            panic(err)
-        }
-
-        gp.currentTrack = nil
-    case "trkseg":
-        err := gp.v.TrackSegmentClose(gp.currentTrackSegment)
-        if err != nil {
-            panic(err)
-        }
-
-        gp.currentTrackSegment = nil
-    case "trkpt":
-        err := gp.v.TrackPointClose(gp.currentTrackPoint)
-        if err != nil {
-            panic(err)
-        }
-
-        gp.currentTrackPoint = nil
-    }
-
-    return nil
-}
-
-// Handle a string found between tags.
-func (gp *GpxParser) handleCharData(s *string) (err error) {
-    defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
-        }
-    }()
-
-    current := gp.ns.PeekFromEnd(0)
-    parent := gp.ns.PeekFromEnd(1)
-
-    if *s != "" && current != nil && parent != nil {
-        currentName := current.(string)
-        parentName := parent.(string)
-
-        if parentName == "trkpt" {
-            err := gp.handleTrackPointCharData(&currentName, s)
-            if err != nil {
-                panic(err)
-            }
-        }
-    }
+    xv.currentTrackPoint.LatitudeDecimal = parseFloat64(attr["lat"])
+    xv.currentTrackPoint.LongitudeDecimal = parseFloat64(attr["lon"])
 
     return nil
 }
 
 // Handle values for the child nodes of a trackpoint node.
-func (gp *GpxParser) handleTrackPointCharData(tagName *string, s *string) (err error) {
+func (xv *xmlVisitor) handleTrackPointCharData(tagName *string, s *string) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
@@ -283,19 +250,19 @@ func (gp *GpxParser) handleTrackPointCharData(tagName *string, s *string) (err e
 
     switch *tagName {
     case "ele":
-        gp.currentTrackPoint.Elevation = parseFloat32(*s)
+        xv.currentTrackPoint.Elevation = parseFloat32(*s)
     case "course":
-        gp.currentTrackPoint.Course = parseFloat32(*s)
+        xv.currentTrackPoint.Course = parseFloat32(*s)
     case "speed":
-        gp.currentTrackPoint.Speed = parseFloat32(*s)
+        xv.currentTrackPoint.Speed = parseFloat32(*s)
     case "hdop":
-        gp.currentTrackPoint.Hdop = parseFloat32(*s)
+        xv.currentTrackPoint.Hdop = parseFloat32(*s)
     case "src":
-        gp.currentTrackPoint.Src = *s
+        xv.currentTrackPoint.Src = *s
     case "sat":
-        gp.currentTrackPoint.SatelliteCount = parseUint8(*s)
+        xv.currentTrackPoint.SatelliteCount = parseUint8(*s)
     case "time":
-        gp.currentTrackPoint.Time = parseIso8601Time(*s)
+        xv.currentTrackPoint.Time = parseIso8601Time(*s)
     }
 
     return nil
