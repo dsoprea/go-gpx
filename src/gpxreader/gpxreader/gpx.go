@@ -161,27 +161,21 @@ func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error
     return nil
 }
 
-func (xv *xmlVisitor) HandleCharData(data *string, xp *xmlvisitor.XmlParser) (err error) {
+func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
         }
     }()
 
-//    if xp.LastState() != xmlvisitor.XmlPartStartTag {
-//        return nil
-//    }
-
     ns := xp.NodeStack()
-    current := ns.PeekFromEnd(0)
     parent := ns.PeekFromEnd(1)
 
-    if *data != "" && current != nil && parent != nil {
-        currentName := current.(string)
+    if parent != nil {
         parentName := parent.(string)
 
         if parentName == "trkpt" {
-            err := xv.handleTrackPointCharData(&currentName, data)
+            err := xv.handleTrackPointValue(tagName, value)
             if err != nil {
                 panic(err)
             }
@@ -190,7 +184,6 @@ func (xv *xmlVisitor) HandleCharData(data *string, xp *xmlvisitor.XmlParser) (er
 
     return nil
 }
-
 
 // Handle the end of a "GPX" [root] node.
 func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
@@ -241,7 +234,7 @@ func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) 
 }
 
 // Handle values for the child nodes of a trackpoint node.
-func (xv *xmlVisitor) handleTrackPointCharData(tagName *string, s *string) (err error) {
+func (xv *xmlVisitor) handleTrackPointValue(tagName *string, s *string) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = r.(error)
