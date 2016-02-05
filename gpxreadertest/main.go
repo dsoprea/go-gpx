@@ -11,45 +11,45 @@ import (
 
 type gpxVisitor struct {}
 
-func newGpxVisitor() (*gpxVisitor) {
+func newGpxVisitor() *gpxVisitor {
     return &gpxVisitor {}
 }
 
-func (gv gpxVisitor) GpxOpen(gpx *gpxreader.Gpx) error {
+func (gv *gpxVisitor) GpxOpen(gpx *gpxreader.Gpx) error {
     fmt.Printf("GPX: %s\n", gpx)
 
     return nil
 }
 
-func (gv gpxVisitor) GpxClose(gpx *gpxreader.Gpx) error {
+func (gv *gpxVisitor) GpxClose(gpx *gpxreader.Gpx) error {
     return nil
 }
 
-func (gv gpxVisitor) TrackOpen(track *gpxreader.Track) error {
+func (gv *gpxVisitor) TrackOpen(track *gpxreader.Track) error {
     fmt.Printf("Track: %s\n", track)
 
     return nil
 }
 
-func (gv gpxVisitor) TrackClose(track *gpxreader.Track) error {
+func (gv *gpxVisitor) TrackClose(track *gpxreader.Track) error {
     return nil
 }
 
-func (gv gpxVisitor) TrackSegmentOpen(trackSegment *gpxreader.TrackSegment) error {
+func (gv *gpxVisitor) TrackSegmentOpen(trackSegment *gpxreader.TrackSegment) error {
     fmt.Printf("Track segment: %s\n", trackSegment)
 
     return nil
 }
 
-func (gv gpxVisitor) TrackSegmentClose(trackSegment *gpxreader.TrackSegment) error {
+func (gv *gpxVisitor) TrackSegmentClose(trackSegment *gpxreader.TrackSegment) error {
     return nil
 }
 
-func (gv gpxVisitor) TrackPointOpen(trackPoint *gpxreader.TrackPoint) error {
+func (gv *gpxVisitor) TrackPointOpen(trackPoint *gpxreader.TrackPoint) error {
     return nil
 }
 
-func (gv gpxVisitor) TrackPointClose(trackPoint *gpxreader.TrackPoint) error {
+func (gv *gpxVisitor) TrackPointClose(trackPoint *gpxreader.TrackPoint) error {
     fmt.Printf("Point: %s\n", trackPoint)
 
     return nil
@@ -84,7 +84,7 @@ func main() {
 
     defer f.Close()
 
-    gv := *newGpxVisitor()
+    gv := newGpxVisitor()
     gp := gpxreader.NewGpxParser(f, gv)
 
     err = gp.Parse()
