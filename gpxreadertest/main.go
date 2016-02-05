@@ -4,7 +4,7 @@ import (
     "os"
     "fmt"
 
-    "gpxreader/gpxreader"
+    "github.com/dsoprea/go-gpxreader"
 
     flags "github.com/jessevdk/go-flags"
 )
@@ -77,12 +77,17 @@ func main() {
 
     gpxFilepath = o.GpxFilepath
 
+    f, err := os.Open(gpxFilepath)
+    if err != nil {
+        panic(err)
+    }
+
+    defer f.Close()
+
     gv := *newGpxVisitor()
-    gp := gpxreader.NewGpxParser(&gpxFilepath, gv)
+    gp := gpxreader.NewGpxParser(f, gv)
 
-    defer gp.Close()
-
-    err := gp.Parse()
+    err = gp.Parse()
     if err != nil {
         print("Error: %s\n", err.Error())
         os.Exit(1)

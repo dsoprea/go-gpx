@@ -3,10 +3,9 @@
 package gpxreader
 
 import (
+    "io"
 
-// TODO(dustin): Implement the URL.
-    "xmlvisitor/xmlvisitor"
-
+    "github.com/dsoprea/go-xmlvisitor"
 )
 
 type GpxParser struct {
@@ -14,18 +13,13 @@ type GpxParser struct {
 }
 
 // Create parser.
-func NewGpxParser(filepath *string, visitor GpxVisitor) *GpxParser {
+func NewGpxParser(r io.Reader, visitor GpxVisitor) *GpxParser {
     gp := &GpxParser {}
 
     v := newXmlVisitor(gp, visitor)
-    gp.xp = xmlvisitor.NewXmlParser(filepath, v)
+    gp.xp = xmlvisitor.NewXmlParser(r, v)
 
     return gp
-}
-
-// Close resources.
-func (gp *GpxParser) Close() {
-    gp.xp.Close()
 }
 
 // Run the parse with a minimal memory footprint.
