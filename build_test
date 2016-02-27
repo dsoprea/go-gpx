@@ -6,10 +6,11 @@ WORKSPACE_PATH="$GOPATH"
 REL_PROJECT_PATH="github.com/dsoprea/go-gpxreader"
 PROJECT_PATH="$WORKSPACE_PATH/bin/$REL_PROJECT_PATH"
 
+mkdir -p $PROJECT_PATH
+
 rm -fr $PROJECT_PATH/gpxreader
 rm -fr $PROJECT_PATH/commands
 
-mkdir -p $PROJECT_PATH
 cp -r gpxreader $PROJECT_PATH
 cp -r commands $PROJECT_PATH
 
