@@ -4,6 +4,7 @@ package gpxreader
 
 import (
     "io"
+    "time"
 
     "github.com/dsoprea/go-xmlvisitor"
 )
@@ -163,7 +164,7 @@ func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor
     }()
 
     ns := xp.NodeStack()
-    parent := ns.PeekFromEnd(1)
+    parent := ns.PeekFromEnd(0)
 
     if parent != nil {
         parentName := parent.(string)
@@ -177,6 +178,22 @@ func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor
     }
 
     return nil
+}
+
+// Parse the 8601 timestamps.
+func (xv *xmlVisitor) parseTimestamp(phrase *string) (timestamp time.Time, err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = r.(error)
+        }
+    }()
+    
+    t, err := time.Parse(time.RFC3339Nano, *phrase)
+    if err != nil {
+        panic(err)
+    }
+
+    return t, nil
 }
 
 // Handle the end of a "GPX" [root] node.
@@ -203,7 +220,10 @@ func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
 
     timeRaw, ok := attr["time"]
     if ok == true {
-        xv.currentGpx.Time = parseIso8601Time(timeRaw)
+        xv.currentGpx.Time, err = xv.parseTimestamp(&timeRaw)
+        if err != nil {
+            panic(err)
+        }
     }
 
     return nil
@@ -249,7 +269,10 @@ func (xv *xmlVisitor) handleTrackPointValue(tagName *string, s *string) (err err
     case "sat":
         xv.currentTrackPoint.SatelliteCount = parseUint8(*s)
     case "time":
-        xv.currentTrackPoint.Time = parseIso8601Time(*s)
+        xv.currentTrackPoint.Time, err = xv.parseTimestamp(s)
+        if err != nil {
+            panic(err)
+        }
     }
 
     return nil
