@@ -7,7 +7,15 @@ This project uses the basic XML tokenization that the XML package provides while
 
 ## Example
 
-The `gpxparse` tool and a modest GPS log is provided for a reference implementation of the `gpxreader` package (which is also the name of this library's package). This is the mostly the source of that tool:
+The `gpxreadertest` tool is provided for a reference implementation of the `gpxreader` package (which is also the name of this library's package). 
+
+To install:
+
+```
+$ go get github.com/dsoprea/go-gpxreader/commands/gpxreadertest
+```
+
+Most of the source:
 
 ```go
 //...
@@ -82,14 +90,13 @@ func main() {
 Output:
 
 ```
-$ bin/gpxparse -f test/20130729.gpx 
+$ gpxreadertest -f 20140909.gpx 
 GPX: GPX<C=[GPSLogger - http://gpslogger.mendhak.com/]>
 Track: Track<>
 Track segment: TrackSegment<>
-Point: TrackPoint<LAT=(26.07072655) LON=(-80.14360848) ELV=(-18.500000) CRS=(0.000000) SPD=(0.750000) HDOP=(5.800000) SRC=[gps] SAT=(7) TIME=[2013-07-30 02:38:29 +0000 UTC]>
-Point: TrackPoint<LAT=(26.07099936) LON=(-80.14324075) ELV=(-43.900002) CRS=(0.000000) SPD=(0.000000) HDOP=(47.599998) SRC=[gps] SAT=(4) TIME=[2013-07-30 02:39:15 +0000 UTC]>
-Point: TrackPoint<LAT=(26.07173904) LON=(-80.14322448) ELV=(-8.100000) CRS=(0.000000) SPD=(0.000000) HDOP=(23.600000) SRC=[gps] SAT=(5) TIME=[2013-07-30 02:40:17 +0000 UTC]>
-Point: TrackPoint<LAT=(26.07182345) LON=(-80.14294142) ELV=(-24.600000) CRS=(0.000000) SPD=(0.000000) HDOP=(21.600000) SRC=[gps] SAT=(5) TIME=[2013-07-30 02:41:19 +0000 UTC]>
+Point: TrackPoint<LAT=(26.47886514) LON=(-80.08643986) ELV=(-12.000000) CRS=(197.899994) SPD=(35.250000) HDOP=(0.900000) SRC=[gps] SAT=(21) TIME=[2014-09-09 19:07:27 +0000 UTC]>
+Point: TrackPoint<LAT=(26.40728154) LON=(-80.11801469) ELV=(9.000000) CRS=(0.000000) SPD=(0.000000) HDOP=(1.200000) SRC=[gps] SAT=(16) TIME=[2014-09-09 22:07:52 +0000 UTC]>
+Point: TrackPoint<LAT=(26.54074478) LON=(-80.07230151) ELV=(-31.000000) CRS=(12.800000) SPD=(31.503967) HDOP=(1.000000) SRC=[gps] SAT=(17) TIME=[2014-09-09 22:53:27 +0000 UTC]>
 ```
 
 
