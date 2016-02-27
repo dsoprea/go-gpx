@@ -6,7 +6,7 @@ import (
     "io"
     "time"
 
-    "github.com/dsoprea/go-xmlvisitor"
+    "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
 )
 
 type GpxParser struct {
