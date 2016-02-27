@@ -1,1 +1,3 @@
-/build
+/build/
+/test/geo_data/
+.DS_Store
