@@ -10,20 +10,7 @@ This project uses the basic XML tokenization that the XML package provides while
 The `gpxparse` tool and a modest GPS log is provided for a reference implementation of the `gpxreader` package (which is also the name of this library's package). This is the mostly the source of that tool:
 
 ```go
-package main
-
-import (
-    "os"
-    "fmt"
-
-    "github.com/dsoprea/go-gpxreader"
-)
-
-type gpxVisitor struct {}
-
-func newGpxVisitor() (*gpxVisitor) {
-    return &gpxVisitor {}
-}
+//...
 
 func (gv *gpxVisitor) GpxOpen(gpx *gpxreader.Gpx) error {
     fmt.Printf("GPX: %s\n", gpx)
@@ -65,15 +52,26 @@ func (gv *gpxVisitor) TrackPointClose(trackPoint *gpxreader.TrackPoint) error {
     return nil
 }
 
+//...
+
 func main() {
-    var gpxFilepath string = "testdata/20130729.gpx"
+    var gpxFilepath string
+
+    o := readOptions()
+
+    gpxFilepath = o.GpxFilepath
+
+    f, err := os.Open(gpxFilepath)
+    if err != nil {
+        panic(err)
+    }
+
+    defer f.Close()
 
     gv := newGpxVisitor()
-    gp := gpxreader.NewGpxParser(&gpxFilepath, gv)
+    gp := gpxreader.NewGpxParser(f, gv)
 
-    defer gp.Close()
-
-    err := gp.Parse()
+    err = gp.Parse()
     if err != nil {
         print("Error: %s\n", err.Error())
         os.Exit(1)

@@ -4,9 +4,9 @@ import (
     "os"
     "fmt"
 
-    "github.com/dsoprea/go-gpxreader"
-
     flags "github.com/jessevdk/go-flags"
+
+    "github.com/dsoprea/go-gpxreader/gpxreader"
 )
 
 type gpxVisitor struct {}
