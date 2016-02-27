@@ -7,11 +7,11 @@ REL_PROJECT_PATH="github.com/dsoprea/go-gpxreader"
 PROJECT_PATH="$WORKSPACE_PATH/${REL_PROJECT_PATH}"
 
 rm -fr $PROJECT_PATH/gpxreader
-rm -fr $PROJECT_PATH/gpxreadertest
+rm -fr $PROJECT_PATH/commands
 
 mkdir -p $PROJECT_PATH
 cp -r gpxreader $PROJECT_PATH
-cp -r commands/gpxreadertest $PROJECT_PATH
+cp -r commands $PROJECT_PATH
 
 go get ${REL_PROJECT_PATH}/gpxreadertest
 if [ $? -ne 0 ]; then
@@ -19,4 +19,4 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-go build -o ${WORKSPACE_PATH}/bin ${REL_PROJECT_PATH}/gpxreadertest
+go build -o ${WORKSPACE_PATH}/bin ${REL_PROJECT_PATH}/commands/gpxreadertest
