@@ -1,3 +1,6 @@
-/build/
+/build/bin/
+/build/pkg/
+/build/src/github.com/dsoprea/go-gpxreader
+/build/src/github.com/dsoprea/gpxreadertest
 /test/geo_data/
 .DS_Store
