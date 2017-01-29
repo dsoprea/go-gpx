@@ -43,6 +43,13 @@ if err := gp.Parse(); err != nil {
 }
 ```
 
+There are also two convenience functions provided that allow you to avoid having to deal with interfaces if you only care about reading points:
+
+```golang
+func EnumerateTrackPoints(f io.Reader, tpc TrackPointCallback) (err error)
+func ExtractTrackPoints(f io.Reader) (points []TrackPoint, err error)
+```
+
 
 ## To Do
 

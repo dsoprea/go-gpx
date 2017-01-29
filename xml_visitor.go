@@ -1,9 +1,6 @@
-// GPX parser/visitor logic
-
 package gpxreader
 
 import (
-    "io"
     "time"
 
     "github.com/dsoprea/go-logging"
@@ -11,53 +8,30 @@ import (
     "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
 )
 
-type GpxParser struct {
-    xp *xmlvisitor.XmlParser
-}
-
-// Create parser.
-func NewGpxParser(r io.Reader, visitor interface{}) *GpxParser {
-    gp := &GpxParser {}
-
-    v := newXmlVisitor(gp, visitor)
-    gp.xp = xmlvisitor.NewXmlParser(r, v)
-
-    return gp
-}
-
-// Run the parse with a minimal memory footprint.
-func (gp *GpxParser) Parse() (err error) {
-    defer func() {
-        if state := recover(); state != nil {
-            err = state.(error)
-        }
-    }()
-
-    err = gp.xp.Parse()
-    log.PanicIf(err)
-
-    return nil
-}
 
 type GpxFileVisitor interface {
     GpxOpen(g *Gpx) error
     GpxClose(g *Gpx) error
 }
 
+
 type GpxTrackVisitor interface {
     TrackOpen(t *Track) error
     TrackClose(t *Track) error
 }
+
 
 type GpxTrackSegmentVisitor interface {
     TrackSegmentOpen(ts *TrackSegment) error
     TrackSegmentClose(ts *TrackSegment) error
 }
 
+
 type GpxTrackPointVisitor interface {
     TrackPointOpen(tp *TrackPoint) error
     TrackPointClose(tp *TrackPoint) error
 }
+
 
 type xmlVisitor struct {
     gp *GpxParser
@@ -79,7 +53,7 @@ func newXmlVisitor(gp *GpxParser, v interface{}) (*xmlVisitor) {
 func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if state := recover(); state != nil {
-            err = state.(error)
+            err = log.Wrap(state.(error))
         }
     }()
 
@@ -125,7 +99,13 @@ func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp 
     return nil
 }
 
-func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error {
+func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) (err error) {
+    defer func() {
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
+        }
+    }()
+
     switch *tagName {
     case "gpx":
         if gfv, ok := xv.v.(GpxFileVisitor); ok == true {
@@ -166,8 +146,8 @@ func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error
 
 func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
         }
     }()
 
@@ -190,8 +170,8 @@ func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor
 // Parse the 8601 timestamps.
 func (xv *xmlVisitor) parseTimestamp(phrase *string) (timestamp time.Time, err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
         }
     }()
     
@@ -204,8 +184,8 @@ func (xv *xmlVisitor) parseTimestamp(phrase *string) (timestamp time.Time, err e
 // Handle the end of a "GPX" [root] node.
 func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
         }
     }()
 
@@ -235,8 +215,8 @@ func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
 // Handle the end of a track-point node.
 func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
         }
     }()
 
@@ -253,8 +233,8 @@ func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) 
 // Handle values for the child nodes of a trackpoint node.
 func (xv *xmlVisitor) handleTrackPointValue(tagName *string, s *string) (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = log.Wrap(state.(error))
         }
     }()
 
