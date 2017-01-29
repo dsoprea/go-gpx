@@ -40,23 +40,23 @@ func (gp *GpxParser) Parse() (err error) {
 }
 
 type GpxFileVisitor interface {
-    GpxOpen(gpx *Gpx) error
-    GpxClose(gpx *Gpx) error
+    GpxOpen(g *Gpx) error
+    GpxClose(g *Gpx) error
 }
 
 type GpxTrackVisitor interface {
-    TrackOpen(track *Track) error
-    TrackClose(track *Track) error
+    TrackOpen(t *Track) error
+    TrackClose(t *Track) error
 }
 
 type GpxTrackSegmentVisitor interface {
-    TrackSegmentOpen(trackSegment *TrackSegment) error
-    TrackSegmentClose(trackSegment *TrackSegment) error
+    TrackSegmentOpen(ts *TrackSegment) error
+    TrackSegmentClose(ts *TrackSegment) error
 }
 
 type GpxTrackPointVisitor interface {
-    TrackPointOpen(trackPoint *TrackPoint) error
-    TrackPointClose(trackPoint *TrackPoint) error
+    TrackPointOpen(tp *TrackPoint) error
+    TrackPointClose(tp *TrackPoint) error
 }
 
 type xmlVisitor struct {
