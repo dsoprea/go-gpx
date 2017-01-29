@@ -196,9 +196,7 @@ func (xv *xmlVisitor) parseTimestamp(phrase *string) (timestamp time.Time, err e
     }()
     
     t, err := time.Parse(time.RFC3339Nano, *phrase)
-    if err != nil {
-        panic(err)
-    }
+    log.PanicIf(err)
 
     return t, nil
 }
@@ -228,9 +226,7 @@ func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
     timeRaw, ok := attr["time"]
     if ok == true {
         xv.currentGpx.Time, err = xv.parseTimestamp(&timeRaw)
-        if err != nil {
-            panic(err)
-        }
+        log.PanicIf(err)
     }
 
     return nil
@@ -277,9 +273,7 @@ func (xv *xmlVisitor) handleTrackPointValue(tagName *string, s *string) (err err
         xv.currentTrackPoint.SatelliteCount = parseUint8(*s)
     case "time":
         xv.currentTrackPoint.Time, err = xv.parseTimestamp(s)
-        if err != nil {
-            panic(err)
-        }
+        log.PanicIf(err)
     }
 
     return nil
