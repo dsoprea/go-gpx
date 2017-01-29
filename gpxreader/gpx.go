@@ -6,6 +6,8 @@ import (
     "io"
     "time"
 
+    "github.com/dsoprea/go-logging"
+
     "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
 )
 
@@ -14,7 +16,7 @@ type GpxParser struct {
 }
 
 // Create parser.
-func NewGpxParser(r io.Reader, visitor GpxVisitor) *GpxParser {
+func NewGpxParser(r io.Reader, visitor interface{}) *GpxParser {
     gp := &GpxParser {}
 
     v := newXmlVisitor(gp, visitor)
@@ -26,33 +28,40 @@ func NewGpxParser(r io.Reader, visitor GpxVisitor) *GpxParser {
 // Run the parse with a minimal memory footprint.
 func (gp *GpxParser) Parse() (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = state.(error)
         }
     }()
 
     err = gp.xp.Parse()
-    if err != nil {
-        panic(err)
-    }
+    log.PanicIf(err)
 
     return nil
 }
 
-type GpxVisitor interface {
+type GpxFileVisitor interface {
     GpxOpen(gpx *Gpx) error
     GpxClose(gpx *Gpx) error
+}
+
+type GpxTrackVisitor interface {
     TrackOpen(track *Track) error
     TrackClose(track *Track) error
+}
+
+type GpxTrackSegmentVisitor interface {
     TrackSegmentOpen(trackSegment *TrackSegment) error
     TrackSegmentClose(trackSegment *TrackSegment) error
+}
+
+type GpxTrackPointVisitor interface {
     TrackPointOpen(trackPoint *TrackPoint) error
     TrackPointClose(trackPoint *TrackPoint) error
 }
 
 type xmlVisitor struct {
     gp *GpxParser
-    v GpxVisitor
+    v interface{}
 
     currentGpx *Gpx
     currentTrack *Track
@@ -60,54 +69,56 @@ type xmlVisitor struct {
     currentTrackPoint *TrackPoint
 }
 
-func newXmlVisitor(gp *GpxParser, v GpxVisitor) (*xmlVisitor) {
+func newXmlVisitor(gp *GpxParser, v interface{}) (*xmlVisitor) {
     return &xmlVisitor {
-            gp: gp,
-            v: v,
+        gp: gp,
+        v: v,
     }
 }
 
 func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
-        if r := recover(); r != nil {
-            err = r.(error)
+        if state := recover(); state != nil {
+            err = state.(error)
         }
     }()
 
     switch *tagName {
     case "gpx":
-        err := xv.handleGpxStart(attrp)
-        if err != nil {
-            panic(err)
+        if err := xv.handleGpxStart(attrp); err != nil {
+            log.Panic(err)
         }
 
-        err = xv.v.GpxOpen(xv.currentGpx)
-        if err != nil {
-            panic(err)
+        if gfv, ok := xv.v.(GpxFileVisitor); ok == true {
+            if err := gfv.GpxOpen(xv.currentGpx); err != nil {
+                log.Panic(err)
+            }
         }
     case "trk":
-        xv.currentTrack = &Track {}
+        xv.currentTrack = new(Track)
 
-        err := xv.v.TrackOpen(xv.currentTrack)
-        if err != nil {
-            panic(err)
+        if gtv, ok := xv.v.(GpxTrackVisitor); ok == true {
+            if err := gtv.TrackOpen(xv.currentTrack); err != nil {
+                log.Panic(err)
+            }
         }
     case "trkseg":
-        xv.currentTrackSegment = &TrackSegment {}
+        xv.currentTrackSegment = new(TrackSegment)
 
-        err := xv.v.TrackSegmentOpen(xv.currentTrackSegment)
-        if err != nil {
-            panic(err)
+        if gtsv, ok := xv.v.(GpxTrackSegmentVisitor); ok == true {
+            if err := gtsv.TrackSegmentOpen(xv.currentTrackSegment); err != nil {
+                log.Panic(err)
+            }
         }
     case "trkpt":
-        err := xv.handleTrackPointEnd(attrp)
-        if err != nil {
-            panic(err)
+        if err := xv.handleTrackPointEnd(attrp); err != nil {
+            log.Panic(err)
         }
 
-        err = xv.v.TrackPointOpen(xv.currentTrackPoint)
-        if err != nil {
-            panic(err)
+        if gtpv, ok := xv.v.(GpxTrackPointVisitor); ok == true {
+            if err := gtpv.TrackPointOpen(xv.currentTrackPoint); err != nil {
+                log.Panic(err)
+            }
         }
     }
 
@@ -117,37 +128,34 @@ func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp 
 func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) error {
     switch *tagName {
     case "gpx":
-        
-        err := xv.v.GpxClose(xv.currentGpx)
-        if err != nil {
-            panic(err)
+        if gfv, ok := xv.v.(GpxFileVisitor); ok == true {
+            if err := gfv.GpxClose(xv.currentGpx); err != nil {
+                log.Panic(err)
+            }
         }
 
         xv.currentGpx = nil
-
     case "trk":
-        
-        err := xv.v.TrackClose(xv.currentTrack)
-        if err != nil {
-            panic(err)
+        if gtv, ok := xv.v.(GpxTrackVisitor); ok == true {
+            if err := gtv.TrackClose(xv.currentTrack); err != nil {
+                log.Panic(err)
+            }
         }
 
         xv.currentTrack = nil
-
     case "trkseg":
-        
-        err := xv.v.TrackSegmentClose(xv.currentTrackSegment)
-        if err != nil {
-            panic(err)
+        if gtsv, ok := xv.v.(GpxTrackSegmentVisitor); ok == true {
+            if err := gtsv.TrackSegmentClose(xv.currentTrackSegment); err != nil {
+                log.Panic(err)
+            }
         }
 
         xv.currentTrackSegment = nil
-
     case "trkpt":
-        
-        err := xv.v.TrackPointClose(xv.currentTrackPoint)
-        if err != nil {
-            panic(err)
+        if gtpv, ok := xv.v.(GpxTrackPointVisitor); ok == true {
+            if err := gtpv.TrackPointClose(xv.currentTrackPoint); err != nil {
+                log.Panic(err)
+            }
         }
 
         xv.currentTrackPoint = nil
@@ -170,9 +178,8 @@ func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor
         parentName := parent.(string)
 
         if parentName == "trkpt" {
-            err := xv.handleTrackPointValue(tagName, value)
-            if err != nil {
-                panic(err)
+            if err := xv.handleTrackPointValue(tagName, value); err != nil {
+                log.Panic(err)
             }
         }
     }
