@@ -25,10 +25,6 @@ func (gtv *SimpleGpxTrackVisitor) TrackPointOpen(tp *TrackPoint) (err error) {
         }
     }()
 
-    if err := gtv.tpc(tp); err != nil {
-        log.Panic(err)
-    }
-
     return nil
 }
 
@@ -38,6 +34,10 @@ func (gtv *SimpleGpxTrackVisitor) TrackPointClose(tp *TrackPoint) (err error) {
             err = log.Wrap(state.(error))
         }
     }()
+
+    if err := gtv.tpc(tp); err != nil {
+        log.Panic(err)
+    }
 
     return nil
 }
