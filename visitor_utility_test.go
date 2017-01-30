@@ -21,8 +21,8 @@ func TestEnumerateTrackPoints(t *testing.T) {
         log.Panic(err)
     }
 
-    if n != 205 {
-        t.Errorf("Points not read correctly.")
+    if n != 204 {
+        t.Fatalf("Point count not correct: (%d)", n)
     }
 }
 
@@ -31,7 +31,7 @@ func TestExtractTrackPoints(t *testing.T) {
     points, err := ExtractTrackPoints(b)
     log.PanicIf(err)
 
-    if len(points) != 205 {
-        t.Errorf("Points not read correctly.")
+    if len(points) != 204 {
+        t.Fatalf("Point count not correct: (%d)", len(points))
     }
 }

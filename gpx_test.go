@@ -84,30 +84,30 @@ func TestFullGpxRead(t *testing.T) {
     }
 
     if gpc.FileVisits == 0 {
-        t.Errorf("No file visits.")
+        t.Fatalf("No file visits.")
     } else if gpc.FileVisitBalance != 0 {
-        t.Errorf("File visits not balanced.")
+        t.Fatalf("File visits not balanced.")
     }
 
     if gpc.TrackVisits == 0 {
-        t.Errorf("No track visits.")
+        t.Fatalf("No track visits.")
     } else if gpc.TrackVisitBalance != 0 {
-        t.Errorf("Track visits not balanced.")
+        t.Fatalf("Track visits not balanced.")
     }
 
     if gpc.TrackSegmentVisits == 0 {
-        t.Errorf("No track-segment visits.")
+        t.Fatalf("No track-segment visits.")
     } else if gpc.TrackSegmentVisitBalance != 0 {
-        t.Errorf("Track-segment visits not balanced.")
+        t.Fatalf("Track-segment visits not balanced.")
     }
 
     if gpc.TrackPointVisits == 0 {
-        t.Errorf("No track-point visits.")
+        t.Fatalf("No track-point visits.")
     } else if gpc.TrackPointVisitBalance != 0 {
-        t.Errorf("Track-point visits not balanced.")
+        t.Fatalf("Track-point visits not balanced.")
     }
 
-    if gpc.TrackPointVisits != 205 {
-        t.Errorf("Points not correctly read.")
+    if gpc.TrackPointVisits != 204 {
+        t.Fatalf("Points not correct size: (%d)", gpc.TrackPointVisits)
     }
 }

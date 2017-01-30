@@ -15,10 +15,10 @@ func TestSummary(t *testing.T) {
     log.PanicIf(err)
 
     if gs.Start.Format(time.RFC3339) != "2016-12-02T08:05:44Z" {
-        t.Errorf("Start time is not correct.")
+        t.Fatalf("Start time is not correct.")
     } else if gs.Stop.Format(time.RFC3339) != "2016-12-03T07:57:07Z" {
-        t.Errorf("Stop time is not correct.")
-    } else if gs.Count != 205 {
-        t.Errorf("Point count is not correct.")
+        t.Fatalf("Stop time is not correct.")
+    } else if gs.Count != 204 {
+        t.Fatalf("Point count is not correct: (%d)", gs.Count)
     }
 }

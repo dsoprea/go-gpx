@@ -19,12 +19,6 @@ func NewSimpleGpxTrackVisitor(tpc TrackPointCallback) *SimpleGpxTrackVisitor {
 }
 
 func (gtv *SimpleGpxTrackVisitor) TrackPointOpen(tp *TrackPoint) (err error) {
-    defer func() {
-        if state := recover(); state != nil {
-            err = log.Wrap(state.(error))
-        }
-    }()
-
     return nil
 }
 
@@ -69,12 +63,6 @@ func ExtractTrackPoints(f io.Reader) (points []TrackPoint, err error) {
     points = make([]TrackPoint, 0)
 
     tpc := func(tp *TrackPoint) (err error) {
-        defer func() {
-            if state := recover(); state != nil {
-                err = log.Wrap(state.(error))
-            }
-        }()
-
         points = append(points, *tp)
 
         return nil

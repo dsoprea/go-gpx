@@ -4,8 +4,13 @@ import (
     "time"
     "os"
     "io"
+    "fmt"
 
     "github.com/dsoprea/go-logging"
+)
+
+var (
+    ErrNoTimestamps = fmt.Errorf("no points had timestamps")
 )
 
 
@@ -23,6 +28,7 @@ func Summary(f io.Reader) (gs *GpxSummary, err error) {
     }()
 
     gs = new(GpxSummary)
+    noTime := false
 
     tpc := func(tp *TrackPoint) (err error) {
         defer func() {
@@ -30,6 +36,11 @@ func Summary(f io.Reader) (gs *GpxSummary, err error) {
                 err = log.Wrap(state.(error))
             }
         }()
+
+        if tp.Time.IsZero() {
+            noTime = true
+            return nil
+        }
 
         gs.Count++
 
@@ -46,6 +57,10 @@ func Summary(f io.Reader) (gs *GpxSummary, err error) {
 
     if err := EnumerateTrackPoints(f, tpc); err != nil {
         log.Panic(err)
+    }
+
+    if gs.Count == 0 && noTime == true {
+        log.Panic(ErrNoTimestamps)
     }
 
     return gs, nil
