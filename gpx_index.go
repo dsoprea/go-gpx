@@ -23,14 +23,14 @@ var (
 
 // GpxPoint A single location represented in a GPX file.
 type GpxPoint struct {
-    latitude, longitude float64
+    Latitude, Longitude float64
 }
 
 
 // GpxFileInfo Represents a single loaded GPX file.
 type GpxFileInfo struct {
     // label Name or filepath of the GPX file.
-    label string
+    Label string
 
     // lastPointTime latest timestamp represented by the file.
     lastPointTime time.Time
@@ -58,14 +58,14 @@ type GpxFileDataAccessor struct {
 
 }
 
-func (gfda *GpxFileDataAccessor) Accessor(label string) (f io.ReadCloser, err error) {
+func (gfda *GpxFileDataAccessor) Accessor(filepath string) (f io.ReadCloser, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
 
-    f, err = os.Open(label)
+    f, err = os.Open(filepath)
     log.PanicIf(err)
 
     return f, nil
@@ -222,7 +222,7 @@ func (gi *GpxIndex) Add(label string) (ti timeindex.TimeInterval, err error) {
     // Store the file info.
 
     gfi := &GpxFileInfo{
-        label: label,
+        Label: label,
         lastPointTime: gs.Stop,
         count: gs.Count,
         index: make(timeindex.TimeSlice, 0),
@@ -285,7 +285,7 @@ func (ihs IndexHitSlice) Add(ih IndexHits) (newIhs IndexHitSlice) {
 
 func SearchIndexHits(ihs IndexHitSlice, ih IndexHits) int {
     p := func(i int) bool {
-        return ihs[i].Time.After(ih.Time) || ihs[i].Time == ih.Time && ihs[i].FileInfo.label > ih.FileInfo.label
+        return ihs[i].Time.After(ih.Time) || ihs[i].Time == ih.Time && ihs[i].FileInfo.Label > ih.FileInfo.Label
     }
     
     return Search(len(ihs), p)
@@ -322,18 +322,18 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     if gfi.isLoaded == true && gi.maxOpenFiles > 0 {
         i := -1
         for j, label := range gi.mru {
-            if label == gfi.label {
+            if label == gfi.Label {
                 i = j
                 break
             }
         }
 
         if i == -1 {
-            log.Panic(fmt.Errorf("Could not found loaded file in MRU: [%s]", gfi.label))
+            log.Panic(fmt.Errorf("Could not found loaded file in MRU: [%s]", gfi.Label))
         }
 
         right := append(gi.mru[:i], gi.mru[i + 1:]...)
-        gi.mru = append([]string { gfi.label }, right...)
+        gi.mru = append([]string { gfi.Label }, right...)
 
         return nil
     }
@@ -361,14 +361,14 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
         gfi.index = gfi.index.Add(tp.Time)
 
         gfi.points[tp.Time] = GpxPoint{
-            latitude: tp.LatitudeDecimal,
-            longitude: tp.LongitudeDecimal,
+            Latitude: tp.LatitudeDecimal,
+            Longitude: tp.LongitudeDecimal,
         }
 
         return nil
     }
 
-    a, err := gi.gda.Accessor(gfi.label)
+    a, err := gi.gda.Accessor(gfi.Label)
     log.PanicIf(err)
 
     defer a.Close()
@@ -382,7 +382,7 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     gfi.isLoaded = true
 
     if gi.maxOpenFiles > 0 {
-        gi.mru = append([]string { gfi.label }, gi.mru...)
+        gi.mru = append([]string { gfi.Label }, gi.mru...)
     }
 
     return nil

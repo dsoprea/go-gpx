@@ -25,7 +25,7 @@ func checkIndex(t *testing.T, gi *GpxIndex, label string, ti timeindex.TimeInter
     }
 
     gfi := files[0]
-    if gfi.label != label {
+    if gfi.Label != label {
         t.Fatalf("GFI label is not correct.")
     } else if gfi.lastPointTime != ti[1] {
         t.Fatalf("GFI stop time is not correct.")
@@ -187,11 +187,11 @@ func TestGpxIndexSearchExact(t *testing.T) {
 
     m := matches[0]
 
-    if m.FileInfo.label != label1 {
+    if m.FileInfo.Label != label1 {
         t.Fatalf("Match label not correct.")
-    } else if m.Point.latitude != 48.45672936673762 {
+    } else if m.Point.Latitude != 48.45672936673762 {
         t.Fatalf("Match latitude not correct.")
-    } else if m.Point.longitude != -122.34140644128601 {
+    } else if m.Point.Longitude != -122.34140644128601 {
         t.Fatalf("Match longitude not correct.")
     }
 }

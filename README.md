@@ -53,6 +53,54 @@ There are also two convenience functions provided that allow you to avoid having
 `TrackPointCallback` is aliased to `func(tp *TrackPoint) error`.
 
 
+## Indexing
+
+We also provide the `GpxIndex` type to search for timestamps over a set of GPX files. Files are loaded on-demand. You can also specify a limit on the number of files loaded concurrently at any given time. A type that fulfills `GpxDataAccessor` must be provided in order to retrieve the GPX data.
+
+Example:
+
+```go
+package main
+
+import (
+    "time"
+
+    "github.com/dsoprea/go-time-index"
+)
+
+tolerance := 1 * time.Minute
+maxFilesLoaded := 0
+
+gfda := new(gpxreader.GpxFileDataAccessor)
+gi := gpxreader.NewGpxIndex(gfda, tolerance, maxFilesLoaded)
+
+// Add() will return a `timeindex.TimeInterval` (`[2]time.Time`) that describes the range of time represented by the file.
+
+if _, err := gi.Add('/data/trip_day1.gpx'); err != nil {
+    panic(err)
+}
+
+if _, err := gi.Add('/data/trip_day2.gpx'); err != nil {
+    panic(err)
+}
+
+q, err := time.Parse(time.RFC3339, "2016-12-03T07:26:00Z")
+if err != nil {
+    panic(err)
+}
+
+// Returns sorted first by time and then file-path.
+matches, err := gi.Search(q)
+if err != nil {
+    panic(err)
+}
+
+for _, match := range matches {
+    fmt.Printf("MATCH: [%s] (%f, %f) IN [%s]\n", match.Time, match.Point.Latitude, match.Point.Longitude, match.FileInfo.Label)
+}
+```
+
+
 ## To Do
 
-- Only the primary location information and other data that is highly common and related is read and supported by the provided data structures. We need to add any attributes or parse any nodes that are currently missing per the spec (see the TODO file). Feel free to request this and/or submit a PR.
+- Only the primary location information and other data that is highly common and related is read and supported by the implemented types. We still need to add any attributes or parse any nodes that are currently missing per the spec (see the TODO file). Feel free to request this and/or submit a PR.
