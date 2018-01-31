@@ -5,7 +5,7 @@ import (
 
     "github.com/dsoprea/go-logging"
 
-    "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
+    "github.com/dsoprea/go-xmlvisitor"
 )
 
 

@@ -5,7 +5,7 @@ import (
 
     "github.com/dsoprea/go-logging"
 
-    "github.com/dsoprea/go-xmlvisitor/xmlvisitor"
+    "github.com/dsoprea/go-xmlvisitor"
 )
 
 
@@ -50,16 +50,16 @@ func newXmlVisitor(gp *GpxParser, v interface{}) (*xmlVisitor) {
     }
 }
 
-func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp *xmlvisitor.XmlParser) (err error) {
+func (xv *xmlVisitor) HandleStart(tagName string, attr map[string]string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
 
-    switch *tagName {
+    switch tagName {
     case "gpx":
-        if err := xv.handleGpxStart(attrp); err != nil {
+        if err := xv.handleGpxStart(attr); err != nil {
             log.Panic(err)
         }
 
@@ -85,7 +85,7 @@ func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp 
             }
         }
     case "trkpt":
-        if err := xv.handleTrackPointEnd(attrp); err != nil {
+        if err := xv.handleTrackPointEnd(attr); err != nil {
             log.Panic(err)
         }
 
@@ -99,14 +99,14 @@ func (xv *xmlVisitor) HandleStart(tagName *string, attrp *map[string]string, xp 
     return nil
 }
 
-func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) (err error) {
+func (xv *xmlVisitor) HandleEnd(tagName string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
 
-    switch *tagName {
+    switch tagName {
     case "gpx":
         if gfv, ok := xv.v.(GpxFileVisitor); ok == true {
             if err := gfv.GpxClose(xv.currentGpx); err != nil {
@@ -144,7 +144,7 @@ func (xv *xmlVisitor) HandleEnd(tagName *string, xp *xmlvisitor.XmlParser) (err 
     return nil
 }
 
-func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor.XmlParser) (err error) {
+func (xv *xmlVisitor) HandleValue(tagName string, value string, xp *xmlvisitor.XmlParser) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -168,28 +168,26 @@ func (xv *xmlVisitor) HandleValue(tagName *string, value *string, xp *xmlvisitor
 }
 
 // Parse the 8601 timestamps.
-func (xv *xmlVisitor) parseTimestamp(phrase *string) (timestamp time.Time, err error) {
+func (xv *xmlVisitor) parseTimestamp(phrase string) (timestamp time.Time, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
-    
-    t, err := time.Parse(time.RFC3339Nano, *phrase)
+
+    t, err := time.Parse(time.RFC3339Nano, phrase)
     log.PanicIf(err)
 
     return t, nil
 }
 
 // Handle the end of a "GPX" [root] node.
-func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
+func (xv *xmlVisitor) handleGpxStart(attr map[string]string) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
-
-    attr := *attrp
 
     xv.currentGpx = &Gpx {
             Xmlns: attr["xmlns"],
@@ -205,7 +203,7 @@ func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
 
     timeRaw, ok := attr["time"]
     if ok == true {
-        xv.currentGpx.Time, err = xv.parseTimestamp(&timeRaw)
+        xv.currentGpx.Time, err = xv.parseTimestamp(timeRaw)
         log.PanicIf(err)
     }
 
@@ -213,14 +211,12 @@ func (xv *xmlVisitor) handleGpxStart(attrp *map[string]string) (err error) {
 }
 
 // Handle the end of a track-point node.
-func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) {
+func (xv *xmlVisitor) handleTrackPointEnd(attr map[string]string) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
-
-    attr := *attrp
 
     xv.currentTrackPoint = &TrackPoint {}
 
@@ -231,26 +227,26 @@ func (xv *xmlVisitor) handleTrackPointEnd(attrp *map[string]string) (err error) 
 }
 
 // Handle values for the child nodes of a trackpoint node.
-func (xv *xmlVisitor) handleTrackPointValue(tagName *string, s *string) (err error) {
+func (xv *xmlVisitor) handleTrackPointValue(tagName string, s string) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
 
-    switch *tagName {
+    switch tagName {
     case "ele":
-        xv.currentTrackPoint.Elevation = parseFloat32(*s)
+        xv.currentTrackPoint.Elevation = parseFloat32(s)
     case "course":
-        xv.currentTrackPoint.Course = parseFloat32(*s)
+        xv.currentTrackPoint.Course = parseFloat32(s)
     case "speed":
-        xv.currentTrackPoint.Speed = parseFloat32(*s)
+        xv.currentTrackPoint.Speed = parseFloat32(s)
     case "hdop":
-        xv.currentTrackPoint.Hdop = parseFloat32(*s)
+        xv.currentTrackPoint.Hdop = parseFloat32(s)
     case "src":
-        xv.currentTrackPoint.Src = *s
+        xv.currentTrackPoint.Src = s
     case "sat":
-        xv.currentTrackPoint.SatelliteCount = parseUint8(*s)
+        xv.currentTrackPoint.SatelliteCount = parseUint8(s)
     case "time":
         xv.currentTrackPoint.Time, err = xv.parseTimestamp(s)
         log.PanicIf(err)
