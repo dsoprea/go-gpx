@@ -66,7 +66,7 @@ import (
     "time"
     "fmt"
 
-    "github.com/dsoprea/go-gpxreader"
+    "github.com/dsoprea/go-gpx/reader"
 )
 
 func findAndPrint(gi *gpxreader.GpxIndex, timePhrase string) {

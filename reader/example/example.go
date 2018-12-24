@@ -1,10 +1,10 @@
 package main
 
 import (
-    "time"
     "fmt"
+    "time"
 
-    "github.com/dsoprea/go-gpxreader"
+    "github.com/dsoprea/go-gpx/reader"
 )
 
 func findAndPrint(gi *gpxreader.GpxIndex, timePhrase string) {
@@ -33,11 +33,11 @@ func main() {
 
     // Add() will return a `timeindex.TimeInterval` (`[2]time.Time`) that describes the range of time represented by the file.
 
-    if _, err := gi.Add("trip_day1.gpx"); err != nil {
+    if _, _, err := gi.Add("trip_day1.gpx"); err != nil {
         panic(err)
     }
 
-    if _, err := gi.Add("trip_day2.gpx"); err != nil {
+    if _, _, err := gi.Add("trip_day2.gpx"); err != nil {
         panic(err)
     }
 

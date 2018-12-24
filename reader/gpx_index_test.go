@@ -8,18 +8,18 @@ import (
     "github.com/dsoprea/go-time-index"
 )
 
-func checkIndex(t *testing.T, gi *GpxIndex, label string, ti timeindex.TimeInterval, indexPosition int) {
-    
-    // `indexPosition` describes where the start-timestamp should be in the 
+func checkIndex(t *testing.T, gi *GpxIndex, label string, tr TimeRange, indexPosition int) {
+
+    // `indexPosition` describes where the start-timestamp should be in the
     // index.
 
     if _, found := gi.members[label]; found == false {
         t.Fatalf("Member not present.")
-    } else if gi.fileTimes[indexPosition] != ti {
-        t.Fatalf("Indexed start time is not correct.")
+    } else if gi.fileTimes[indexPosition].From != tr[0] || gi.fileTimes[indexPosition].To != tr[1] {
+        t.Fatalf("Indexed start time is not correct: %v != %v", gi.fileTimes[indexPosition], tr)
     }
 
-    files, found := gi.files[ti]
+    files, found := gi.files[tr]
     if found == false {
         t.Fatalf("File info not found.")
     }
@@ -27,7 +27,7 @@ func checkIndex(t *testing.T, gi *GpxIndex, label string, ti timeindex.TimeInter
     gfi := files[0]
     if gfi.Label != label {
         t.Fatalf("GFI label is not correct.")
-    } else if gfi.lastPointTime != ti[1] {
+    } else if gfi.lastPointTime != tr[1] {
         t.Fatalf("GFI stop time is not correct.")
     }
 }
@@ -35,7 +35,7 @@ func checkIndex(t *testing.T, gi *GpxIndex, label string, ti timeindex.TimeInter
 func getTestGpxIndexAccessor() *GpxBufferedDataAccessor {
     label1 := "testfile1"
     label2 := "testfile2"
-    
+
     gbda := NewGpxBufferedDataAccessor()
 
     if err := gbda.Add(label1, TestGpxData); err != nil {
@@ -52,27 +52,27 @@ func getTestGpxIndexAccessor() *GpxBufferedDataAccessor {
 func TestGpxIndexAdd(t *testing.T) {
     label1 := "testfile1"
     label2 := "testfile2"
-    
-    gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 10 * time.Minute, 0)
 
-    // Note that we add TestGpxData2 before TestGpxData because the start-time 
-    // of TestGpxData should be inserted before TestGpxData2. If something 
-    // breaks down in the storage/sorting, there's a better chance that it'll 
+    gbda := getTestGpxIndexAccessor()
+    gi := NewGpxIndex(gbda, 10*time.Minute, 0)
+
+    // Note that we add TestGpxData2 before TestGpxData because the start-time
+    // of TestGpxData should be inserted before TestGpxData2. If something
+    // breaks down in the storage/sorting, there's a better chance that it'll
     // stand-out this way.
 
     // Check that the first file is properly indexed.
-    
-    t2, err := gi.Add(label2)
+
+    tr2, _, err := gi.Add(label2)
     log.PanicIf(err)
 
     // Check that the second file is properly indexed.
 
-    t1, err := gi.Add(label1)
+    tr1, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    checkIndex(t, gi, label1, t1, 0)
-    checkIndex(t, gi, label2, t2, 1)
+    checkIndex(t, gi, label1, tr1, 0)
+    checkIndex(t, gi, label2, tr2, 1)
 }
 
 func TestGpxIndexEnsureLoaded(t *testing.T) {
@@ -81,9 +81,9 @@ func TestGpxIndexEnsureLoaded(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 10 * time.Minute, 1)
+    gi := NewGpxIndex(gbda, 10*time.Minute, 1)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
     if len(gi.mru) > 0 {
@@ -109,11 +109,11 @@ func TestGpxIndexEnsureLoaded(t *testing.T) {
     }
 
     first := gfi1.index[0]
-    last := gfi1.index[len(gfi1.index) - 1]
+    last := gfi1.index[len(gfi1.index)-1]
 
-    if first.Format(time.RFC3339) != "2016-12-02T08:05:44Z" {
+    if first.Time.Format(time.RFC3339) != "2016-12-02T08:05:44Z" {
         t.Fatalf("First time in index is not correct.")
-    } else if last.Format(time.RFC3339) != "2016-12-03T07:57:07Z" {
+    } else if last.Time.Format(time.RFC3339) != "2016-12-03T07:57:07Z" {
         t.Fatalf("Last time in index is not correct.")
     }
 
@@ -126,12 +126,12 @@ func TestGpxIndexEnsureLoaded(t *testing.T) {
     q, err := time.Parse(time.RFC3339, "2016-12-02T16:23:23Z")
     log.PanicIf(err)
 
-    results := getNearestTimes(gfi1.index, q, time.Minute * 5)
+    results := getNearestTimes(gfi1.index, q, time.Minute*5)
     if len(results) != 1 || results[0] != right {
         t.Fatalf("GFI 1 one-ended nearest-time search failed.")
     }
 
-    results = getNearestTimes(gfi1.index, q, time.Minute * 8)
+    results = getNearestTimes(gfi1.index, q, time.Minute*8)
     if len(results) != 2 || results[0] != left || results[1] != right {
         t.Fatalf("GFI 1 two-ended nearest-time search failed.")
     }
@@ -159,12 +159,12 @@ func TestGpxIndexSearchExact(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 1 * time.Minute, 1)
+    gi := NewGpxIndex(gbda, 1*time.Minute, 1)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     // Test the autoload of data-set 1. Do an exact-match.
@@ -183,7 +183,7 @@ func TestGpxIndexSearchExact(t *testing.T) {
 
     if len(matches) != 1 || matches[0].Time != q {
         t.Fatalf("GI exact search results not correct.")
-    } 
+    }
 
     m := matches[0]
 
@@ -203,12 +203,12 @@ func TestGpxIndexSearchApproximate(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 4 * time.Minute, 1)
+    gi := NewGpxIndex(gbda, 4*time.Minute, 1)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     q, err := time.Parse(time.RFC3339, "2016-12-03T07:26:00Z")
@@ -244,12 +244,12 @@ func TestGpxIndexSearchSecondDatasetWithMru(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 1 * time.Minute, 2)
+    gi := NewGpxIndex(gbda, 1*time.Minute, 2)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     // Invoke the first dataset.
@@ -292,12 +292,12 @@ func TestGpxIndexSearchSecondDatasetWithoutMru(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 1 * time.Minute, 0)
+    gi := NewGpxIndex(gbda, 1*time.Minute, 0)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     // Invoke the first dataset.
@@ -336,12 +336,12 @@ func TestGpxIndexUnload(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 1 * time.Minute, 1)
+    gi := NewGpxIndex(gbda, 1*time.Minute, 1)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     // Invoke the first dataset.
@@ -387,12 +387,12 @@ func TestGpxIndexMruPromote(t *testing.T) {
     // Load data.
 
     gbda := getTestGpxIndexAccessor()
-    gi := NewGpxIndex(gbda, 1 * time.Minute, 3)
+    gi := NewGpxIndex(gbda, 1*time.Minute, 3)
 
-    _, err := gi.Add(label1)
+    _, _, err := gi.Add(label1)
     log.PanicIf(err)
 
-    _, err = gi.Add(label2)
+    _, _, err = gi.Add(label2)
     log.PanicIf(err)
 
     // Invoke the first dataset.

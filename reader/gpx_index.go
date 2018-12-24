@@ -2,13 +2,13 @@
 package gpxreader
 
 import (
-    "time"
+    "bytes"
     "fmt"
-    "strings"
     "io"
     "os"
     "sort"
-    "bytes"
+    "strings"
+    "time"
 
     "github.com/dsoprea/go-logging"
     "github.com/dsoprea/go-time-index"
@@ -16,16 +16,14 @@ import (
 
 var (
     ErrFileAlreadyAdded = fmt.Errorf("file already added")
-    ErrEmptyFile = fmt.Errorf("file empty")
-    ErrNotFound = fmt.Errorf("not found")
+    ErrEmptyFile        = fmt.Errorf("file empty")
+    ErrNotFound         = fmt.Errorf("not found")
 )
-
 
 // GpxPoint A single location represented in a GPX file.
 type GpxPoint struct {
     Latitude, Longitude float64
 }
-
 
 // GpxFileInfo Represents a single loaded GPX file.
 type GpxFileInfo struct {
@@ -48,14 +46,11 @@ type GpxFileInfo struct {
     points map[time.Time]GpxPoint
 }
 
-
 type GpxDataAccessor interface {
     Accessor(label string) (rc io.ReadCloser, err error)
 }
 
-
 type GpxFileDataAccessor struct {
-
 }
 
 func (gfda *GpxFileDataAccessor) Accessor(filepath string) (f io.ReadCloser, err error) {
@@ -70,7 +65,6 @@ func (gfda *GpxFileDataAccessor) Accessor(filepath string) (f io.ReadCloser, err
 
     return f, nil
 }
-
 
 type GpxBufferedDataAccessorResource struct {
     b *bytes.Buffer
@@ -92,7 +86,6 @@ func (gbdar GpxBufferedDataAccessorResource) Read(p []byte) (n int, err error) {
 func (gbdar GpxBufferedDataAccessorResource) Close() (err error) {
     return nil
 }
-
 
 type GpxBufferedDataAccessor struct {
     sources map[string]string
@@ -138,54 +131,56 @@ func (gbda *GpxBufferedDataAccessor) Accessor(label string) (rc io.ReadCloser, e
     return b, nil
 }
 
+type TimeRange [2]time.Time
+
 // GpxIndex Knows how to find location for a given point in time.
 type GpxIndex struct {
     // gda Knows how to get file-data.
     gda GpxDataAccessor
 
-    // fileTimes A sorted slice of the earliest represented times found in each 
+    // fileTimes A sorted slice of the earliest represented times found in each
     // file.
     fileTimes timeindex.TimeIntervalSlice
 
-    // files A lookup of the earliest represent times found and the list of 
-    // files that had them (we allow for the same earliest point to occur in 
+    // files A lookup of the earliest represent times found and the list of
+    // files that had them (we allow for the same earliest point to occur in
     // more than one file).
-    files map[timeindex.TimeInterval][]*GpxFileInfo
-    
-    // members A lookup of all known files (so we don't allow to load more than 
+    files map[TimeRange][]*GpxFileInfo
+
+    // members A lookup of all known files (so we don't allow to load more than
     // once).
     members map[string]*GpxFileInfo
 
-    // proximityTolerance How near the previous point in the index has to be 
-    // from the time that was queried to be allowed as a match. 
+    // proximityTolerance How near the previous point in the index has to be
+    // from the time that was queried to be allowed as a match.
     proximityTolerance time.Duration
 
     // maxOpenFiles Maximum allowed open files.
     maxOpenFiles int
 
-    // mru List of labels of open files sorted by usage (only if 
+    // mru List of labels of open files sorted by usage (only if
     // maxOpenFiles is greater than zero).
     mru []string
 }
 
 func NewGpxIndex(gda GpxDataAccessor, proximityTolerance time.Duration, maxOpenFiles int) *GpxIndex {
     ft := make(timeindex.TimeIntervalSlice, 0)
-    f := make(map[timeindex.TimeInterval][]*GpxFileInfo)
+    f := make(map[TimeRange][]*GpxFileInfo)
     m := make(map[string]*GpxFileInfo)
     mru := make(sort.StringSlice, 0)
 
     return &GpxIndex{
-        gda: gda,
-        fileTimes: ft,
-        files: f,
-        members: m,
+        gda:                gda,
+        fileTimes:          ft,
+        files:              f,
+        members:            m,
         proximityTolerance: proximityTolerance,
-        maxOpenFiles: maxOpenFiles,
-        mru: mru,
+        maxOpenFiles:       maxOpenFiles,
+        mru:                mru,
     }
 }
 
-func (gi *GpxIndex) Add(label string) (ti timeindex.TimeInterval, err error) {
+func (gi *GpxIndex) Add(label string) (tr TimeRange, gfi *GpxFileInfo, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -202,7 +197,7 @@ func (gi *GpxIndex) Add(label string) (ti timeindex.TimeInterval, err error) {
     label = strings.ToLower(label)
 
     if _, found := gi.members[label]; found == true {
-        return timeindex.TimeInterval{}, ErrFileAlreadyAdded
+        return TimeRange{}, nil, ErrFileAlreadyAdded
     }
 
     // Read the file once to establish the time range.
@@ -211,36 +206,37 @@ func (gi *GpxIndex) Add(label string) (ti timeindex.TimeInterval, err error) {
     log.PanicIf(err)
 
     if gs.Count == 0 {
-        return timeindex.TimeInterval{}, ErrEmptyFile
+        return TimeRange{}, nil, ErrEmptyFile
     }
 
     // Add to the list of start times representing all known files.
 
-    ti = timeindex.TimeInterval { gs.Start, gs.Stop }
-    gi.fileTimes = gi.fileTimes.Add(ti)
+    gi.fileTimes = gi.fileTimes.Add(gs.Start, gs.Stop, gs)
 
     // Store the file info.
 
-    gfi := &GpxFileInfo{
-        Label: label,
+    gfi = &GpxFileInfo{
+        Label:         label,
         lastPointTime: gs.Stop,
-        count: gs.Count,
-        index: make(timeindex.TimeSlice, 0),
-        points: make(map[time.Time]GpxPoint),
+        count:         gs.Count,
+        index:         make(timeindex.TimeSlice, 0),
+        points:        make(map[time.Time]GpxPoint),
     }
 
     gi.members[label] = gfi
 
-    if files, found := gi.files[ti]; found == true {
-        gi.files[ti] = append(files, gfi)
+    tr = TimeRange{gs.Start, gs.Stop}
+
+    if files, found := gi.files[tr]; found == true {
+        gi.files[tr] = append(files, gfi)
     } else {
-        gi.files[ti] = []*GpxFileInfo { gfi }
+        gi.files[tr] = []*GpxFileInfo{gfi}
     }
 
-    return ti, nil
+    return tr, gfi, nil
 }
 
-func (gi *GpxIndex) AddWithFile(filepath string) (ti timeindex.TimeInterval, err error) {
+func (gi *GpxIndex) AddWithFile(filepath string) (tr TimeRange, gfi *GpxFileInfo, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -252,16 +248,15 @@ func (gi *GpxIndex) AddWithFile(filepath string) (ti timeindex.TimeInterval, err
 
     defer f.Close()
 
-    ti, err = gi.Add(filepath)
+    tr, gfi, err = gi.Add(filepath)
     log.PanicIf(err)
 
-    return ti, err
+    return tr, gfi, err
 }
 
-
 type IndexHits struct {
-    Time time.Time
-    Point GpxPoint
+    Time     time.Time
+    Point    GpxPoint
     FileInfo *GpxFileInfo
 }
 
@@ -277,7 +272,7 @@ func (ihs IndexHitSlice) Add(ih IndexHits) (newIhs IndexHitSlice) {
         return
     }
 
-    right := append(IndexHitSlice { ih }, ihs[i:]...)
+    right := append(IndexHitSlice{ih}, ihs[i:]...)
     newIhs = append(ihs[:i], right...)
 
     return newIhs
@@ -287,7 +282,7 @@ func SearchIndexHits(ihs IndexHitSlice, ih IndexHits) int {
     p := func(i int) bool {
         return ihs[i].Time.After(ih.Time) || ihs[i].Time == ih.Time && ihs[i].FileInfo.Label > ih.FileInfo.Label
     }
-    
+
     return Search(len(ihs), p)
 }
 
@@ -309,7 +304,7 @@ func Search(n int, f func(int) bool) int {
     return i
 }
 
-// ensureLoaded Make sure the given GPX data is loaded. Unload older data if we 
+// ensureLoaded Make sure the given GPX data is loaded. Unload older data if we
 // have to make room.
 func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     defer func() {
@@ -332,24 +327,24 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
             log.Panic(fmt.Errorf("Could not found loaded file in MRU: [%s]", gfi.Label))
         }
 
-        right := append(gi.mru[:i], gi.mru[i + 1:]...)
-        gi.mru = append([]string { gfi.Label }, right...)
+        right := append(gi.mru[:i], gi.mru[i+1:]...)
+        gi.mru = append([]string{gfi.Label}, right...)
 
         return nil
     }
 
-    // We're maxed-out on the files we've loaded. Deallocate the point data on 
+    // We're maxed-out on the files we've loaded. Deallocate the point data on
     // the least-used, currently-allocated data.
     len_ := len(gi.mru)
     if gi.maxOpenFiles > 0 && len_ >= gi.maxOpenFiles {
-        oldestFilepath := gi.mru[len_ - 1]
+        oldestFilepath := gi.mru[len_-1]
         oldestGfi := gi.members[oldestFilepath]
 
         oldestGfi.index = nil
         oldestGfi.points = nil
         oldestGfi.isLoaded = false
 
-        gi.mru = gi.mru[:len_ - 1]
+        gi.mru = gi.mru[:len_-1]
     }
 
     // Load the points.
@@ -358,10 +353,10 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     gfi.points = make(map[time.Time]GpxPoint)
 
     tpc := func(tp *TrackPoint) (err error) {
-        gfi.index = gfi.index.Add(tp.Time)
+        gfi.index = gfi.index.Add(tp.Time, tp)
 
         gfi.points[tp.Time] = GpxPoint{
-            Latitude: tp.LatitudeDecimal,
+            Latitude:  tp.LatitudeDecimal,
             Longitude: tp.LongitudeDecimal,
         }
 
@@ -382,7 +377,7 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     gfi.isLoaded = true
 
     if gi.maxOpenFiles > 0 {
-        gi.mru = append([]string { gfi.Label }, gi.mru...)
+        gi.mru = append([]string{gfi.Label}, gi.mru...)
     }
 
     return nil
@@ -395,7 +390,8 @@ func (gi *GpxIndex) searchFile(matches []IndexHits, fileInterval timeindex.TimeI
         }
     }()
 
-    files := gi.files[fileInterval]
+    tr := TimeRange{fileInterval.From, fileInterval.To}
+    files := gi.files[tr]
     results := IndexHitSlice(matches)
     for _, gfi := range files {
         if err := gi.ensureLoaded(gfi); err != nil {
@@ -404,8 +400,8 @@ func (gi *GpxIndex) searchFile(matches []IndexHits, fileInterval timeindex.TimeI
 
         cb := func(foundTime time.Time) (err error) {
             ih := IndexHits{
-                Time: foundTime,
-                Point: gfi.points[foundTime],
+                Time:     foundTime,
+                Point:    gfi.points[foundTime],
                 FileInfo: gfi,
             }
 
