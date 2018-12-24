@@ -1,15 +1,16 @@
 package gpxreader
 
 import (
-    "testing"
     "bytes"
+    "testing"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-logging"
 )
 
 func TestEnumerateTrackPoints(t *testing.T) {
     n := 0
-    cb := func(tp *TrackPoint) error {
+    cb := func(tp *gpxcommon.TrackPoint) error {
         n++
 
         return nil

@@ -1,4 +1,4 @@
-package gpxreader
+package gpxcommon
 
 import (
     "fmt"
@@ -23,12 +23,12 @@ import (
 */
 
 type Gpx struct {
-    Xmlns string
-    Xsi string
-    Version float32
-    Creator string
+    Xmlns          string
+    Xsi            string
+    Version        float32
+    Creator        string
     SchemaLocation string
-// TODO(dustin): Finish populating this from the child.
+    // TODO(dustin): Finish populating this from the child.
     Time time.Time
 }
 
@@ -44,7 +44,6 @@ func (g *Track) String() string {
 }
 
 type TrackSegment struct {
-
 }
 
 func (g *TrackSegment) String() string {
@@ -52,15 +51,15 @@ func (g *TrackSegment) String() string {
 }
 
 type TrackPoint struct {
-    LatitudeDecimal float64
+    LatitudeDecimal  float64
     LongitudeDecimal float64
-    Elevation float32
-    Course float32
-    Speed float32
-    Hdop float32
-    Src string
-    SatelliteCount uint8
-    Time time.Time
+    Elevation        float32
+    Course           float32
+    Speed            float32
+    Hdop             float32
+    Src              string
+    SatelliteCount   uint8
+    Time             time.Time
 }
 
 func (tp *TrackPoint) String() string {

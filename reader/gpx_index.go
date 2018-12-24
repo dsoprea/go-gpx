@@ -10,6 +10,7 @@ import (
     "strings"
     "time"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-logging"
     "github.com/dsoprea/go-time-index"
 )
@@ -352,7 +353,7 @@ func (gi *GpxIndex) ensureLoaded(gfi *GpxFileInfo) (err error) {
     gfi.index = make(timeindex.TimeSlice, 0)
     gfi.points = make(map[time.Time]GpxPoint)
 
-    tpc := func(tp *TrackPoint) (err error) {
+    tpc := func(tp *gpxcommon.TrackPoint) (err error) {
         gfi.index = gfi.index.Add(tp.Time, tp)
 
         gfi.points[tp.Time] = GpxPoint{

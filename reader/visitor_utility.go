@@ -3,10 +3,11 @@ package gpxreader
 import (
     "io"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-logging"
 )
 
-type TrackPointCallback func(tp *TrackPoint) error
+type TrackPointCallback func(tp *gpxcommon.TrackPoint) error
 
 type SimpleGpxTrackVisitor struct {
     tpc TrackPointCallback
@@ -18,11 +19,11 @@ func NewSimpleGpxTrackVisitor(tpc TrackPointCallback) *SimpleGpxTrackVisitor {
     }
 }
 
-func (gtv *SimpleGpxTrackVisitor) TrackPointOpen(tp *TrackPoint) (err error) {
+func (gtv *SimpleGpxTrackVisitor) TrackPointOpen(tp *gpxcommon.TrackPoint) (err error) {
     return nil
 }
 
-func (gtv *SimpleGpxTrackVisitor) TrackPointClose(tp *TrackPoint) (err error) {
+func (gtv *SimpleGpxTrackVisitor) TrackPointClose(tp *gpxcommon.TrackPoint) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -53,16 +54,16 @@ func EnumerateTrackPoints(f io.Reader, tpc TrackPointCallback) (err error) {
     return nil
 }
 
-func ExtractTrackPoints(f io.Reader) (points []TrackPoint, err error) {
+func ExtractTrackPoints(f io.Reader) (points []gpxcommon.TrackPoint, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
         }
     }()
 
-    points = make([]TrackPoint, 0)
+    points = make([]gpxcommon.TrackPoint, 0)
 
-    tpc := func(tp *TrackPoint) (err error) {
+    tpc := func(tp *gpxcommon.TrackPoint) (err error) {
         points = append(points, *tp)
 
         return nil

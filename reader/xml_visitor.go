@@ -5,48 +5,44 @@ import (
 
     "github.com/dsoprea/go-logging"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-xmlvisitor"
 )
 
-
 type GpxFileVisitor interface {
-    GpxOpen(g *Gpx) error
-    GpxClose(g *Gpx) error
+    GpxOpen(g *gpxcommon.Gpx) error
+    GpxClose(g *gpxcommon.Gpx) error
 }
-
 
 type GpxTrackVisitor interface {
-    TrackOpen(t *Track) error
-    TrackClose(t *Track) error
+    TrackOpen(t *gpxcommon.Track) error
+    TrackClose(t *gpxcommon.Track) error
 }
-
 
 type GpxTrackSegmentVisitor interface {
-    TrackSegmentOpen(ts *TrackSegment) error
-    TrackSegmentClose(ts *TrackSegment) error
+    TrackSegmentOpen(ts *gpxcommon.TrackSegment) error
+    TrackSegmentClose(ts *gpxcommon.TrackSegment) error
 }
-
 
 type GpxTrackPointVisitor interface {
-    TrackPointOpen(tp *TrackPoint) error
-    TrackPointClose(tp *TrackPoint) error
+    TrackPointOpen(tp *gpxcommon.TrackPoint) error
+    TrackPointClose(tp *gpxcommon.TrackPoint) error
 }
-
 
 type xmlVisitor struct {
     gp *GpxParser
-    v interface{}
+    v  interface{}
 
-    currentGpx *Gpx
-    currentTrack *Track
-    currentTrackSegment *TrackSegment
-    currentTrackPoint *TrackPoint
+    currentGpx          *gpxcommon.Gpx
+    currentTrack        *gpxcommon.Track
+    currentTrackSegment *gpxcommon.TrackSegment
+    currentTrackPoint   *gpxcommon.TrackPoint
 }
 
-func newXmlVisitor(gp *GpxParser, v interface{}) (*xmlVisitor) {
-    return &xmlVisitor {
+func newXmlVisitor(gp *GpxParser, v interface{}) *xmlVisitor {
+    return &xmlVisitor{
         gp: gp,
-        v: v,
+        v:  v,
     }
 }
 
@@ -69,7 +65,7 @@ func (xv *xmlVisitor) HandleStart(tagName string, attr map[string]string, xp *xm
             }
         }
     case "trk":
-        xv.currentTrack = new(Track)
+        xv.currentTrack = new(gpxcommon.Track)
 
         if gtv, ok := xv.v.(GpxTrackVisitor); ok == true {
             if err := gtv.TrackOpen(xv.currentTrack); err != nil {
@@ -77,7 +73,7 @@ func (xv *xmlVisitor) HandleStart(tagName string, attr map[string]string, xp *xm
             }
         }
     case "trkseg":
-        xv.currentTrackSegment = new(TrackSegment)
+        xv.currentTrackSegment = new(gpxcommon.TrackSegment)
 
         if gtsv, ok := xv.v.(GpxTrackSegmentVisitor); ok == true {
             if err := gtsv.TrackSegmentOpen(xv.currentTrackSegment); err != nil {
@@ -189,11 +185,11 @@ func (xv *xmlVisitor) handleGpxStart(attr map[string]string) (err error) {
         }
     }()
 
-    xv.currentGpx = &Gpx {
-            Xmlns: attr["xmlns"],
-            Xsi: attr["xsi"],
-            Creator: attr["creator"],
-            SchemaLocation: attr["schemaLocation"],
+    xv.currentGpx = &gpxcommon.Gpx{
+        Xmlns:          attr["xmlns"],
+        Xsi:            attr["xsi"],
+        Creator:        attr["creator"],
+        SchemaLocation: attr["schemaLocation"],
     }
 
     versionRaw, ok := attr["version"]
@@ -218,7 +214,7 @@ func (xv *xmlVisitor) handleTrackPointEnd(attr map[string]string) (err error) {
         }
     }()
 
-    xv.currentTrackPoint = &TrackPoint {}
+    xv.currentTrackPoint = &gpxcommon.TrackPoint{}
 
     xv.currentTrackPoint.LatitudeDecimal = parseFloat64(attr["lat"])
     xv.currentTrackPoint.LongitudeDecimal = parseFloat64(attr["lon"])

@@ -1,11 +1,12 @@
 package gpxreader
 
 import (
-    "time"
-    "os"
-    "io"
     "fmt"
+    "io"
+    "os"
+    "time"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-logging"
 )
 
@@ -13,10 +14,9 @@ var (
     ErrNoTimestamps = fmt.Errorf("no points had timestamps")
 )
 
-
 type GpxSummary struct {
     Start time.Time
-    Stop time.Time
+    Stop  time.Time
     Count int
 }
 
@@ -30,7 +30,7 @@ func Summary(f io.Reader) (gs *GpxSummary, err error) {
     gs = new(GpxSummary)
     noTime := false
 
-    tpc := func(tp *TrackPoint) (err error) {
+    tpc := func(tp *gpxcommon.TrackPoint) (err error) {
         defer func() {
             if state := recover(); state != nil {
                 err = log.Wrap(state.(error))

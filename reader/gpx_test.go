@@ -1,74 +1,75 @@
 package gpxreader
 
 import (
-    "testing"
     "bytes"
+    "testing"
 
+    "github.com/dsoprea/go-gpx"
     "github.com/dsoprea/go-logging"
 )
 
 type GpxPointCollector struct {
-    FileVisits int
-    FileVisitBalance int
-    TrackVisits int
-    TrackVisitBalance int
-    TrackSegmentVisits int
+    FileVisits               int
+    FileVisitBalance         int
+    TrackVisits              int
+    TrackVisitBalance        int
+    TrackSegmentVisits       int
     TrackSegmentVisitBalance int
-    TrackPointVisits int
-    TrackPointVisitBalance int
+    TrackPointVisits         int
+    TrackPointVisitBalance   int
 }
 
 func NewGpsPointCollector() *GpxPointCollector {
     return new(GpxPointCollector)
 }
 
-func (gpc *GpxPointCollector) GpxOpen(gpx *Gpx) error {
+func (gpc *GpxPointCollector) GpxOpen(gpx *gpxcommon.Gpx) error {
     gpc.FileVisits++
     gpc.FileVisitBalance++
 
     return nil
 }
 
-func (gpc *GpxPointCollector) GpxClose(gpx *Gpx) error {
+func (gpc *GpxPointCollector) GpxClose(gpx *gpxcommon.Gpx) error {
     gpc.FileVisitBalance--
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackOpen(track *Track) error {
+func (gpc *GpxPointCollector) TrackOpen(track *gpxcommon.Track) error {
     gpc.TrackVisits++
     gpc.TrackVisitBalance++
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackClose(track *Track) error {
+func (gpc *GpxPointCollector) TrackClose(track *gpxcommon.Track) error {
     gpc.TrackVisitBalance--
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackSegmentOpen(trackSegment *TrackSegment) error {
+func (gpc *GpxPointCollector) TrackSegmentOpen(trackSegment *gpxcommon.TrackSegment) error {
     gpc.TrackSegmentVisits++
     gpc.TrackSegmentVisitBalance++
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackSegmentClose(trackSegment *TrackSegment) error {
+func (gpc *GpxPointCollector) TrackSegmentClose(trackSegment *gpxcommon.TrackSegment) error {
     gpc.TrackSegmentVisitBalance--
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackPointOpen(trackPoint *TrackPoint) error {
+func (gpc *GpxPointCollector) TrackPointOpen(trackPoint *gpxcommon.TrackPoint) error {
     gpc.TrackPointVisits++
     gpc.TrackPointVisitBalance++
 
     return nil
 }
 
-func (gpc *GpxPointCollector) TrackPointClose(trackPoint *TrackPoint) error {
+func (gpc *GpxPointCollector) TrackPointClose(trackPoint *gpxcommon.TrackPoint) error {
     gpc.TrackPointVisitBalance--
 
     return nil
