@@ -31,7 +31,7 @@ type GpxTrackPointVisitor interface {
 }
 ```
 
-Example usage, given a string with the GPX text. `NewGpsPointCollector` is a type that satisfies all of the interfaces. This is based on similar code from the tests:
+Example usage with a string with the GPX text. `GpsPointCollector` is a type that satisfies all of the interfaces. This is based on similar code from the tests:
 
 ```golang
 b := bytes.NewBufferString(testGpxData)

@@ -37,7 +37,7 @@ func (gtv *SimpleGpxTrackVisitor) TrackPointClose(tp *gpxcommon.TrackPoint) (err
     return nil
 }
 
-func EnumerateTrackPoints(f io.Reader, tpc TrackPointCallback) (err error) {
+func EnumerateTrackPoints(r io.Reader, tpc TrackPointCallback) (err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -45,7 +45,7 @@ func EnumerateTrackPoints(f io.Reader, tpc TrackPointCallback) (err error) {
     }()
 
     sgtv := NewSimpleGpxTrackVisitor(tpc)
-    gp := NewGpxParser(f, sgtv)
+    gp := NewGpxParser(r, sgtv)
 
     if err := gp.Parse(); err != nil {
         log.Panic(err)
@@ -54,7 +54,7 @@ func EnumerateTrackPoints(f io.Reader, tpc TrackPointCallback) (err error) {
     return nil
 }
 
-func ExtractTrackPoints(f io.Reader) (points []gpxcommon.TrackPoint, err error) {
+func ExtractTrackPoints(r io.Reader) (points []gpxcommon.TrackPoint, err error) {
     defer func() {
         if state := recover(); state != nil {
             err = log.Wrap(state.(error))
@@ -69,7 +69,7 @@ func ExtractTrackPoints(f io.Reader) (points []gpxcommon.TrackPoint, err error) 
         return nil
     }
 
-    if err := EnumerateTrackPoints(f, tpc); err != nil {
+    if err := EnumerateTrackPoints(r, tpc); err != nil {
         log.Panic(err)
     }
 
