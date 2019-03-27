@@ -268,7 +268,7 @@ func (gtpb *GpxTrackPointBuilder) Write() (err error) {
         },
     }
 
-    err = gtpb.b.encoder.EncodeElement(gtpb.Time.Format("2006-01-02T15:04:05-0700"), timeStart)
+    err = gtpb.b.encoder.EncodeElement(gtpb.Time.UTC().Format("2006-01-02T15:04:05-0700"), timeStart)
     log.PanicIf(err)
 
     trkptEnd := xml.EndElement{

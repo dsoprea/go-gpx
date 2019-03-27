@@ -2,6 +2,7 @@ package gpxwriter
 
 import (
     "bytes"
+    "fmt"
     "testing"
     "time"
 
@@ -19,7 +20,10 @@ func TestBuilder_Gpx(t *testing.T) {
 <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd"></gpx>`
 
     if buffer.String() != expected {
-        t.Fatalf("Output not expected:\n%s", buffer.String())
+        fmt.Printf("\nACTUAL:\n%s\n", buffer.String())
+        fmt.Printf("\nEXPECTED:\n%s\n", expected)
+
+        t.Fatalf("Output not expected.")
     }
 }
 
@@ -115,14 +119,15 @@ func TestBuilder_TrackPoint(t *testing.T) {
   <trk>
     <trkseg>
       <trkpt lat="0.123" lon="0.456">
-        <time>` + now.Format("2006-01-02T15:04:05-0700") + `</time>
+        <time>` + now.UTC().Format("2006-01-02T15:04:05-0700") + `</time>
       </trkpt>
     </trkseg>
   </trk>
 </gpx>`
 
     if buffer.String() != expected {
-        t.Fatalf("Output not expected:\n%s", buffer.String())
+        fmt.Printf("\nACTUAL:\n%s\n", buffer.String())
+        fmt.Printf("\nEXPECTED:\n%s\n", expected)
     }
 }
 
@@ -190,19 +195,20 @@ func TestBuilder_TrackPoint_Multiple(t *testing.T) {
   <trk>
     <trkseg>
       <trkpt lat="0.123" lon="0.456">
-        <time>` + now1.Format("2006-01-02T15:04:05-0700") + `</time>
+        <time>` + now1.UTC().Format("2006-01-02T15:04:05-0700") + `</time>
       </trkpt>
       <trkpt lat="0.123" lon="0.456">
-        <time>` + now2.Format("2006-01-02T15:04:05-0700") + `</time>
+        <time>` + now2.UTC().Format("2006-01-02T15:04:05-0700") + `</time>
       </trkpt>
       <trkpt lat="0.123" lon="0.456">
-        <time>` + now3.Format("2006-01-02T15:04:05-0700") + `</time>
+        <time>` + now3.UTC().Format("2006-01-02T15:04:05-0700") + `</time>
       </trkpt>
     </trkseg>
   </trk>
 </gpx>`
 
     if buffer.String() != expected {
-        t.Fatalf("Output not expected:\n%s", buffer.String())
+        fmt.Printf("\nACTUAL:\n%s\n", buffer.String())
+        fmt.Printf("\nEXPECTED:\n%s\n", expected)
     }
 }
